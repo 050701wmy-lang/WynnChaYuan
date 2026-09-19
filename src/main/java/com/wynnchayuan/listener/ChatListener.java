@@ -103,6 +103,11 @@ public final class ChatListener {
             return;
         }
         if (hit == null) {
+            if (serverSide
+                    && !PlayerDataFilter.carriesPlayerData(GlyphSplitter.toTemplate(message))
+                    && !com.wynnchayuan.render.ThirdPartyLiterals.reserved(message.getStringWithoutFormatting())) {
+                ChatBlock.awaitAi(message);
+            }
             return;                      // 查不到就別動，原文比半吊子好
         }
         event.setMessage(StyledText.fromComponent(hit));
@@ -125,6 +130,6 @@ public final class ChatListener {
      */
     private static Component replaceInPlace(StyledText message) {
         Component chat = LineTranslator.translateChat(message, WynnChaYuan.translations());
-        return chat != null ? chat : LineTranslator.translate(message, WynnChaYuan.translations());
+        return chat != null ? chat : LineTranslator.translateOfficial(message, WynnChaYuan.translations());
     }
 }

@@ -4,7 +4,7 @@ package com.wynnchayuan.render;
  * 自己畫文字時用的色票。
  *
  * <h2>為什麼要有這個類別，而不是直接寫 0xFFFFFF</h2>
- * {@code GuiGraphics.drawString} 收的是 <b>ARGB</b>，不是 RGB。寫成
+ * {@code GuiGraphicsExtractor.text} 收的是 <b>ARGB</b>，不是 RGB。寫成
  * {@code 0xFFFFFF} 的 alpha 是 {@code 0x00}——文字會照常排版、照常佔位，
  * 但<b>完全透明</b>。畫面上看起來就是「框有出現，裡面是空的」。
  *

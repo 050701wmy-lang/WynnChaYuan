@@ -2,7 +2,7 @@ package com.wynnchayuan.client;
 
 import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.render.Colors;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 
@@ -23,7 +23,7 @@ public final class Cards {
     private Cards() {}
 
     /** 一張卡片：深色底、主題色細邊、四角內縮。 */
-    public static void panel(GuiGraphics g, int x, int y, int w, int h) {
+    public static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         int edge = (WynnChaYuan.config().accentARGB() & 0x00FFFFFF) | 0x50000000;
 
         g.fill(x + 1, y, x + w - 1, y + h, CARD_BG);
@@ -37,9 +37,9 @@ public final class Cards {
     }
 
     /** 卡片標題：主題色文字加一條短底線。 */
-    public static void title(GuiGraphics g, Font font, int x, int y, String text) {
+    public static void title(GuiGraphicsExtractor g, Font font, int x, int y, String text) {
         int accent = WynnChaYuan.config().accentARGB();
-        g.drawString(font, Component.literal(text), x, y, accent);
+        g.text(font, Component.literal(text), x, y, accent);
         int w = font.width(text);
         g.fill(x, y + 10, x + w, y + 11, accent);
     }
@@ -61,8 +61,8 @@ public final class Cards {
     }
 
     /** 按鈕下方的說明文字。 */
-    public static void hint(GuiGraphics g, Font font, int x, int y, String text) {
-        g.drawString(font, Component.literal(text), x, y, Colors.HINT);
+    public static void hint(GuiGraphicsExtractor g, Font font, int x, int y, String text) {
+        g.text(font, Component.literal(text), x, y, Colors.HINT);
     }
 
     /**
@@ -82,7 +82,7 @@ public final class Cards {
      * <p>圖示與標題當成<b>一組</b>置中，不是各自置中——分開算的話標題一長
      * 兩個就會疊在一起。
      */
-    public static void header(GuiGraphics g, Font font, int screenW, String title, String subtitle) {
+    public static void header(GuiGraphicsExtractor g, Font font, int screenW, String title, String subtitle) {
         int accent = WynnChaYuan.config().accentARGB();
         g.fill(0, 0, screenW, 46, 0xD00B1119);
         g.fill(0, 46, screenW, 47, accent);
@@ -92,8 +92,8 @@ public final class Cards {
         int x = (screenW - total) / 2;
         g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, ICON,
                 x, 3, 0f, 0f, ICON_SIZE, ICON_SIZE, 256, 256, 256, 256);
-        g.drawString(font, Component.literal(title),
+        g.text(font, Component.literal(title),
                 x + ICON_SIZE + gap, 10, accent);
-        g.drawCenteredString(font, Component.literal(subtitle), screenW / 2, 28, Colors.HINT);
+        g.centeredText(font, Component.literal(subtitle), screenW / 2, 28, Colors.HINT);
     }
 }

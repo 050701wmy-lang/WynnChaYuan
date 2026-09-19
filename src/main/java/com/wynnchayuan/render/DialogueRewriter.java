@@ -118,6 +118,7 @@ public final class DialogueRewriter {
      * @return 改寫過的訊息，或 {@code null} 表示原樣不動
      */
     public static Component rewrite(Component message, TranslationStore store) {
+        refreshTranslationRevision();
         if (message == null || store == null) {
             return null;
         }
@@ -288,6 +289,21 @@ public final class DialogueRewriter {
                 // 查不到。接得上上一格就是同一個選項，沿用它的譯文，見 Marquee。
                 pick = Marquee.follow(rowFont, row.strip());
             }
+            if (pick == null || pick.isBlank()) {
+                LineParts choiceParts = LineParts.of(StyledText.fromString(row));
+                boolean stable = com.wynnchayuan.ai.AiTranslations.settled(
+                        choiceParts.template(), "choice-" + rowFont);
+                // A scrolling tail is not a new choice. Reuse the existing marquee filter.
+                String trimmed = row.strip();
+                boolean clipped = !trimmed.isEmpty() && trimmed.charAt(0) >= 'a'
+                        && trimmed.charAt(0) <= 'z';
+                String ai = com.wynnchayuan.ai.AiTranslations.fallback(
+                        choiceParts.template(), "CHOICE", store, stable && !clipped);
+                if (ai != null) {
+                    pick = fill(ai, choiceParts);
+                    if (pick != null) Marquee.remember(rowFont, row.strip(), pick);
+                }
+            }
             if (pick == null || pick.isBlank() || !renderable(pick)) {
                 i = end;
                 continue;                       // 查不到就留英文，不要換一半
@@ -384,6 +400,7 @@ public final class DialogueRewriter {
             }
             out.append(Component.literal(texts.get(i)).withStyle(style));
         }
+        com.wynnchayuan.capture.OwnOutputs.note(out);
         return out;
     }
 
@@ -883,6 +900,7 @@ public final class DialogueRewriter {
 
     static String line(String text, TranslationStore store, int rows,
             Style style, int width) {
+        refreshTranslationRevision();
         // 先參數化再查表。
         //
         // 語料裡的鍵是「Hey, {u}! Are you alright…」，而畫面上是玩家的真名。
@@ -900,6 +918,7 @@ public final class DialogueRewriter {
             parts = parts.namingPlayer();
         }
         String typed = parts.template().strip();
+        boolean aiSteady = com.wynnchayuan.ai.AiTranslations.settled(typed, "inline-body");
         String source = typed;
         // 「字停下來了嗎」一幀只能問一次，而且<b>每一幀都要問</b>。
         //
@@ -998,6 +1017,11 @@ public final class DialogueRewriter {
             }
             source = hit == null ? null : typed;
         }
+        if ((hit == null || hit.isBlank()) && exact == null && source == null) {
+            hit = com.wynnchayuan.ai.AiTranslations.fallback(typed, "DIALOGUE", store,
+                    steady && aiSteady);
+            if (hit != null) source = typed;
+        }
         if (hit == null || hit.isBlank()) {
             // 認不出是哪一句時，沿用上一幀<b>已經貼在畫面上</b>的那段譯文。
             //
@@ -1071,6 +1095,16 @@ public final class DialogueRewriter {
 
     /** 上一幀貼上畫面的譯文，以及當時原文打到哪。見 {@link #kept}。 */
     private static String held;
+    private static long translationRevision = -1;
+
+    private static void refreshTranslationRevision() {
+        long revision = com.wynnchayuan.ai.AiTranslations.revision();
+        if (translationRevision != revision) {
+            forget();
+            Marquee.clear();
+            translationRevision = revision;
+        }
+    }
     private static String heldRaw = "";
 
     /**

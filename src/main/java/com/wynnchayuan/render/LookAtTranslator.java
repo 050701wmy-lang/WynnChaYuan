@@ -6,7 +6,7 @@ import com.wynnchayuan.capture.GlyphSplitter;
 import com.wynnchayuan.translate.LineTranslator;
 import com.wynntils.core.text.StyledText;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -84,6 +84,7 @@ public final class LookAtTranslator {
 
     /** 這一段譯文是什麼時候<b>第一次</b>顯示的。見 {@link #MIN_SHOW_MS}。 */
     private static volatile long shownAt = 0;
+    private static long renderedRevision = -1;
 
     /**
      * 一段譯文最少要顯示這麼久。
@@ -172,7 +173,14 @@ public final class LookAtTranslator {
     }
 
     /** 每幀呼叫。沒有對著任何名牌時什麼都不畫。 */
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
+        long revision = com.wynnchayuan.ai.AiTranslations.revision();
+        if (renderedRevision != revision) {
+            renderedRevision = revision;
+            lastShown = null;
+            lastTemplate = null;
+            shownAt = 0;
+        }
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || LABELS.isEmpty()) {
             return;
@@ -421,7 +429,7 @@ public final class LookAtTranslator {
      * <p>擺不下就少畫幾個，而不是換行：這一排的用途是「掃一眼有誰」，
      * 擠成兩三行反而比原本更難讀。
      */
-    private static void drawRow(GuiGraphics graphics, Minecraft mc,
+    private static void drawRow(GuiGraphicsExtractor graphics, Minecraft mc,
                                 List<Component> boxes, float alpha) {
         if (boxes.isEmpty()) {
             return;
@@ -469,7 +477,7 @@ public final class LookAtTranslator {
             Boxes.draw(graphics, x, y, w, height, a);
             int ty = y + 4;
             for (Component line : lines) {
-                graphics.drawString(mc.font, line, x + 4, ty, Colors.fade(Colors.TEXT, a));
+                graphics.text(mc.font, line, x + 4, ty, Colors.fade(Colors.TEXT, a));
                 ty += lineHeight;
             }
             x += w + GAP;
@@ -489,7 +497,7 @@ public final class LookAtTranslator {
      * <p>高度隨 boss bar 的數量走——Wynncraft 常常同時掛好幾條。
      * 寫死一個高度的話，沒有 boss bar 時會浮在半空，有三條時又會被蓋住。
      */
-    private static int defaultY(GuiGraphics graphics) {
+    private static int defaultY(GuiGraphicsExtractor graphics) {
         return TOP_MARGIN;
     }
 

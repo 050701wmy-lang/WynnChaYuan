@@ -11,7 +11,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Component;
@@ -66,7 +66,7 @@ public final class MarketPicker {
 
     private static void attach(ChatScreen chat) {
         State state = new State(chat);
-        ScreenEvents.afterRender(chat).register(
+        ScreenEvents.afterExtract(chat).register(
                 (screen, g, mouseX, mouseY, partial) -> state.render(g, mouseX, mouseY));
         ScreenMouseEvents.allowMouseClick(chat).register(
                 (screen, event) -> !state.click(event.x(), event.y()));
@@ -130,7 +130,7 @@ public final class MarketPicker {
             }
         }
 
-        void render(GuiGraphics g, int mouseX, int mouseY) {
+        void render(GuiGraphicsExtractor g, int mouseX, int mouseY) {
             refresh();
             if (rows.isEmpty()) {
                 return;
@@ -142,7 +142,7 @@ public final class MarketPicker {
             g.nextStratum();
             g.fill(at.left, at.top, at.left + at.width, at.bottom,
                     WynnChaYuan.config().backgroundARGB());
-            g.renderOutline(at.left, at.top, at.width, at.bottom - at.top, accent);
+            g.outline(at.left, at.top, at.width, at.bottom - at.top, accent);
 
             int hover = rowAt(mouseX, mouseY, at);
             for (int i = 0; i < rows.size(); i++) {
@@ -151,15 +151,15 @@ public final class MarketPicker {
                 if (i == selected || i == hover) {
                     g.fill(at.left + 1, y - 1, at.left + at.width - 1, y + ROW_H - 1, picked);
                 }
-                g.drawString(font, row.chinese(), at.left + PAD, y, Colors.TEXT, false);
-                g.drawString(font, row.english(), at.left + PAD + at.zhWidth + COLUMN_GAP, y,
+                g.text(font, row.chinese(), at.left + PAD, y, Colors.TEXT, false);
+                g.text(font, row.english(), at.left + PAD + at.zhWidth + COLUMN_GAP, y,
                         ENGLISH, false);
             }
             int hintY = at.top + PAD + rows.size() * ROW_H + 1;
             Component hint = all.size() > rows.size()
                     ? T.c("market.pick.more", all.size() - rows.size())
                     : T.c("market.pick.hint");
-            g.drawString(font, hint.copy().withStyle(ChatFormatting.DARK_GRAY),
+            g.text(font, hint.copy().withStyle(ChatFormatting.DARK_GRAY),
                     at.left + PAD, hintY, Colors.FAINT, false);
         }
 

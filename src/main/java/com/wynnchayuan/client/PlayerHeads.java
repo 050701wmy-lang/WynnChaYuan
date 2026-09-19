@@ -1,8 +1,8 @@
 package com.wynnchayuan.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.PlayerFaceRenderer;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * 貢獻者的 ID 送給一個我們管不到的服務，而且那個服務哪天收掉，頭像就全沒了。
  *
  * <p>原版本來就有整套：{@link ResolvableProfile} 查 profile、
- * {@code SkinManager} 抓材質並快取到磁碟、{@link PlayerFaceRenderer} 畫臉。
+ * {@code SkinManager} 抓材質並快取到磁碟、{@link PlayerFaceExtractor} 畫臉。
  * 全都是對 Mojang 自己的伺服器，而且玩家本來就在用同一套快取。
  *
  * <h2>失敗就是預設皮膚，不是空白</h2>
@@ -41,11 +41,11 @@ public final class PlayerHeads {
      *
      * @param mcName Minecraft ID；{@code null} 或空字串就不畫
      */
-    public static void draw(GuiGraphics g, String mcName, int x, int y, int size) {
+    public static void draw(GuiGraphicsExtractor g, String mcName, int x, int y, int size) {
         if (mcName == null || mcName.isBlank()) {
             return;
         }
-        PlayerFaceRenderer.draw(g, skinOf(mcName), x, y, size);
+        PlayerFaceExtractor.extractRenderState(g, skinOf(mcName), x, y, size);
     }
 
     private static PlayerSkin skinOf(String mcName) {

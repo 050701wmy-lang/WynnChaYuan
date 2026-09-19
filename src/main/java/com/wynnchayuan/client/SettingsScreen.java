@@ -7,7 +7,7 @@ import com.wynnchayuan.capture.CorpusExport;
 import com.wynnchayuan.render.Colors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -237,16 +237,17 @@ public final class SettingsScreen extends Screen {
         int mid = this.width / 2;
         int left = mid - 148;
         addRenderableWidget(Button.builder(updateLabel(),
-                b -> this.minecraft.setScreen(new ReleaseNotesScreen(this)))
+                b -> this.minecraft.gui.setScreen(new ReleaseNotesScreen(this)))
                 .bounds(left, this.height - 26, 92, 20).build());
         addRenderableWidget(Button.builder(T.c("button.credits"),
-                b -> this.minecraft.setScreen(new CreditsScreen(this)))
+                b -> this.minecraft.gui.setScreen(new CreditsScreen(this)))
                 .bounds(left + 96, this.height - 26, 108, 20).build());
         // 「完成」順手把還沒套用的選擇套用掉。
         //
         // 套用鈕就在同一個畫面上，但沒有人會覺得「完成」不含「套用」——
         // 選好語言按完成，畫面關掉、選的東西沒了，那是最容易踩到的坑。
         addRenderableWidget(Button.builder(T.c("button.done"), b -> {
+            if (aiBase != null) saveAi(WynnChaYuan.ai().config().enabled());
             if (pendingLanguage != null) {
                 applyLanguage();
             } else if (pendingFallback != null) {
@@ -367,16 +368,28 @@ public final class SettingsScreen extends Screen {
     /** 輸入框 + 套用。 */
     private EditBox field(String key, String hint, String value, int max,
                           Runnable apply) {
-        return fieldNamed(T.s(key), hint, value, max, apply);
+        return fieldNamed(T.s(key), hint, value, max, apply, key.equals("ai.key"));
     }
 
     private EditBox fieldNamed(String name, String hint, String value, int max,
                                Runnable apply) {
+        return fieldNamed(name, hint, value, max, apply, false);
+    }
+
+    private EditBox fieldNamed(String name, String hint, String value, int max,
+                               Runnable apply, boolean secret) {
         Row row = add(name, hint);
         EditBox box = new EditBox(this.font, 0, 0, ctrlW() - 46, 20,
-                Component.literal(name));
-        box.setValue(value);
+                Component.literal(name)) {
+            @Override protected net.minecraft.network.chat.MutableComponent createNarrationMessage() {
+                return secret ? Component.literal(name) : super.createNarrationMessage();
+            }
+        };
+        if (secret) box.addFormatter((text, offset) ->
+                net.minecraft.util.FormattedCharSequence.forward("*".repeat(text.length()),
+                        net.minecraft.network.chat.Style.EMPTY));
         box.setMaxLength(max);
+        box.setValue(value);
         row.widgets.add(box);
         row.widgets.add(Button.builder(T.c("button.apply"), b -> apply.run())
                 .bounds(ctrlW() - 42, 0, 42, 20).build());
@@ -453,7 +466,7 @@ public final class SettingsScreen extends Screen {
                     b.setMessage(anchorLabel());
                 });
         action("panel.place", T.s("panel.place.hint"), T.c("button.adjust"),
-                () -> this.minecraft.setScreen(new PositionScreen(this)));
+                () -> this.minecraft.gui.setScreen(new PositionScreen(this)));
         back(cycle("panel.side",
                 this::sideLabel, b -> {
                     WynnChaYuan.config().cyclePanelSide();
@@ -505,7 +518,7 @@ public final class SettingsScreen extends Screen {
                 this::nametagLabel, b -> {
                     WynnChaYuan.config().cycleNametagMode();
                     b.setMessage(nametagLabel());
-                }, T.s("button.advanced"), () -> this.minecraft.setScreen(new NametagScreen(this)));
+                }, T.s("button.advanced"), () -> this.minecraft.gui.setScreen(new NametagScreen(this)));
         back(cycle("world.chat",
                 this::chatModeLabel, b -> {
                     WynnChaYuan.config().cycleChatMode();
@@ -579,6 +592,8 @@ public final class SettingsScreen extends Screen {
                             .withStyle(ChatFormatting.GREEN));
                 });
 
+        aiRows();
+
         // 底下是工具：譯文從哪裡來、現在就重抓、匯出、提交。
         tools();
         cycle("data.source",
@@ -601,10 +616,40 @@ public final class SettingsScreen extends Screen {
                 () -> ConfirmLinkScreen.confirmLinkNow(this, CorpusExport.ISSUE_URL));
     }
 
+    private EditBox aiBase, aiKey, aiModel, aiLanguage;
+
+    private void aiRows() {
+        var service = WynnChaYuan.ai();
+        if (service == null) return;
+        var config = service.config();
+        cycle("ai.enabled", () -> ctrl(onOff(service.config().enabled())), b -> {
+            saveAi(!service.config().enabled());
+            b.setMessage(ctrl(onOff(service.config().enabled())));
+        });
+        aiBase = field("ai.base", T.s("ai.base.hint"), config.baseUrl(), 1024,
+                () -> saveAi(service.config().enabled()));
+        aiKey = field("ai.key", T.s("ai.key.hint"), config.apiKey(), 2048,
+                () -> saveAi(service.config().enabled()));
+        aiModel = field("ai.model", T.s("ai.model.hint"), config.model(), 256,
+                () -> saveAi(service.config().enabled()));
+        aiLanguage = field("ai.language", T.s("ai.language.hint"), config.targetLanguage(), 64,
+                () -> saveAi(service.config().enabled()));
+        action("ai.clear", T.s("ai.clear.hint"), T.c("ai.clear"), () -> {
+            service.clearCache();
+            say(T.c("ai.cleared"));
+        });
+    }
+
+    private void saveAi(boolean enabled) {
+        WynnChaYuan.ai().configure(new com.wynnchayuan.ai.AiTranslationConfig(enabled,
+                aiBase.getValue(), aiKey.getValue(), aiModel.getValue(), aiLanguage.getValue()));
+        say(T.c("ai.saved"));
+    }
+
     // ------------------------------------------------------------ 繪製
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         SettingsLayout box = box();
         int x0 = originX();
         int pane = paneW();
@@ -618,7 +663,7 @@ public final class SettingsScreen extends Screen {
         Cards.panel(g, box.listCardX(), box.tabsY(),
                 box.listCardW(), box.listBottom() - box.tabsY());
 
-        super.render(g, mouseX, mouseY, delta);
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
         Cards.header(g, this.font, this.width, "WynnChaYuan",
                 T.s("header.subtitle", WynnChaYuan.version()));
@@ -629,10 +674,10 @@ public final class SettingsScreen extends Screen {
 
         // 這一頁在管什麼。標題列與卡片之間那一行。
         int accent = WynnChaYuan.config().accentARGB();
-        g.drawString(this.font, Component.literal(tabName(tab)),
+        g.text(this.font, Component.literal(tabName(tab)),
                 box.tabsCardX() + 2, SettingsLayout.LEAD_Y, accent);
         int lead = box.tabsCardX() + 2 + this.font.width(tabName(tab)) + 8;
-        g.drawString(this.font,
+        g.text(this.font,
                 Component.literal(Cards.fit(this.font, tabAbout(tab),
                         box.tabsCardX() + box.footerW() - lead - 4)),
                 lead, SettingsLayout.LEAD_Y, Colors.FAINT);
@@ -673,14 +718,14 @@ public final class SettingsScreen extends Screen {
                        0x14FFFFFF);
             }
             // 真的還是放不下就截斷。凸出去比截斷難看得多。
-            g.drawString(this.font,
+            g.text(this.font,
                     Component.literal(Cards.fit(this.font, row.name, pane - ctrlW() - 6)),
                     px, row.y + 6, on ? Colors.TEXT : Colors.HINT);
         }
 
         // 還有更多列的時候講一聲，不然使用者不知道可以滾
         if (rows.size() > perPage()) {
-            g.drawString(this.font,
+            g.text(this.font,
                     T.c("footer.scroll", scroll + 1,
                             Math.min(rows.size(), scroll + perPage()),
                             rows.size()),
@@ -696,7 +741,7 @@ public final class SettingsScreen extends Screen {
      * <p>三種東西共用同一行，優先序：剛做完的動作結果 &gt; 滑鼠指著的那一列的說明
      * &gt; 載入了幾條譯文。分成三個位置的話，畫面下緣會空一大片沒人看的字。
      */
-    private void footer(GuiGraphics g, int x0, int pane, String hovered) {
+    private void footer(GuiGraphicsExtractor g, int x0, int pane, String hovered) {
         int w = box().footerW();
         int y = box().footerY();
         Cards.panel(g, box().tabsCardX(), y, w, 20);
@@ -714,7 +759,7 @@ public final class SettingsScreen extends Screen {
         }
         // GitHub 回來的訊息長度事先不知道（「連線失敗：UnknownHostException…」），
         // 不截的話會跑到卡片外面去。顏色要留著，所以截字不截 Component。
-        g.drawString(this.font,
+        g.text(this.font,
                 Component.literal(Cards.fit(this.font, line.getString(), w - 10))
                         .withStyle(line.getStyle()),
                 x0 - 2, y + 6, Colors.TEXT);
@@ -1320,7 +1365,7 @@ public final class SettingsScreen extends Screen {
             Component line = Component.literal("[WynnChaYuan] " + result)
                     .withStyle(ok ? ChatFormatting.GREEN : ChatFormatting.RED);
             com.wynnchayuan.capture.OwnOutputs.note(line);
-            this.minecraft.player.displayClientMessage(line, false);
+            this.minecraft.player.sendSystemMessage(line);
         }
     }
 }

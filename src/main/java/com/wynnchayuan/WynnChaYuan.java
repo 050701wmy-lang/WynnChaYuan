@@ -18,7 +18,7 @@ import com.wynntils.core.WynntilsMod;
 import net.fabricmc.api.ClientModInitializer;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -54,6 +54,9 @@ public final class WynnChaYuan implements ClientModInitializer {
     private static ScheduledExecutorService flusher;
     private static CollectorConfig config;
     private static TranslationStore translations;
+    private static com.wynnchayuan.ai.AiTranslationService ai;
+
+    public static com.wynnchayuan.ai.AiTranslationService ai() { return ai; }
     private static KeyMapping openSettingsKey;
 
     /** 把目前的翻譯面板拍成一張圖，給校稿用。 */
@@ -100,6 +103,18 @@ public final class WynnChaYuan implements ClientModInitializer {
         com.wynnchayuan.translate.TranslationCache.modVersion = version();
         store = new CaptureStore(dir.resolve("captured.json"));
         config = new CollectorConfig(dir.resolve("config.json"));
+        ai = new com.wynnchayuan.ai.AiTranslationService(dir);
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register(
+                (handler, sender, client) -> com.wynnchayuan.ai.AiTranslations.sessionChanged(true));
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register(
+                (handler, client) -> {
+                    com.wynnchayuan.ai.AiTranslations.sessionChanged(false);
+                    com.wynnchayuan.render.DialogueOverlay.clear();
+                    com.wynnchayuan.render.TrackerOverlay.clear();
+                    com.wynnchayuan.render.LookAtTranslator.clear();
+                    com.wynnchayuan.listener.ChatBlock.clear();
+                });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ai.close());
         com.wynnchayuan.render.ThirdPartySections.load(dir);
         com.wynnchayuan.render.ThirdPartyLiterals.load(dir);
         // 診斷檔預設不寫。
@@ -205,7 +220,7 @@ public final class WynnChaYuan implements ClientModInitializer {
         // Wynntils 的 ItemTooltipRenderEvent.Post 從來沒被發送過，用不了，
         // 所以改掛 Fabric 的螢幕事件。
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
-            ScreenEvents.afterRender(screen).register(
+            ScreenEvents.afterExtract(screen).register(
                     (s, graphics, mx, my, delta) ->
                             RenderListener.renderAfterScreen(graphics, mx, my));
             // 畫面開著時的按鍵要另外接。
@@ -349,6 +364,8 @@ public final class WynnChaYuan implements ClientModInitializer {
         // 讀不懂的檔（上次被關掉時寫到一半）改名放旁邊、從 jar 補回來再載一次
         com.wynnchayuan.translate.TranslationCache.loadRepairing(translations, layers);
         loadReferenceKeys(layers);
+        com.wynnchayuan.ai.AiTranslations.officialChanged();
+        if (ai != null) ai.sessionChanged(net.minecraft.client.Minecraft.getInstance().level != null);
     }
 
     /**
@@ -564,19 +581,19 @@ public final class WynnChaYuan implements ClientModInitializer {
                     net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "main"));
 
     private static void registerKeyBind() {
-        openSettingsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        openSettingsKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.wynnchayuan.openSettings",
                 InputConstants.Type.KEYSYM,
                 org.lwjgl.glfw.GLFW.GLFW_KEY_F6,
                 KEY_CATEGORY));
-        screenshotKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        screenshotKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.wynnchayuan.screenshot",
                 InputConstants.Type.KEYSYM,
                 // 預設從 F8 換成 F9：實機回報 F8 按下去沒反應（有東西也綁在
                 // 那個鍵上，見 PanelShot#conflict），改綁 F9 才會動。
                 org.lwjgl.glfw.GLFW.GLFW_KEY_F9,
                 KEY_CATEGORY));
-        copyChatKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        copyChatKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.wynnchayuan.copyChat",
                 InputConstants.Type.KEYSYM,
                 org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN,   // 預設不綁，見欄位說明
@@ -591,10 +608,10 @@ public final class WynnChaYuan implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openSettingsKey.consumeClick()) {
-                client.setScreen(new SettingsScreen());
+                client.gui.setScreen(new SettingsScreen());
             }
             while (copyChatKey.consumeClick()) {
-                client.setScreen(new com.wynnchayuan.client.ChatCopyScreen());
+                client.gui.setScreen(new com.wynnchayuan.client.ChatCopyScreen());
             }
             // 截圖的按鍵在 tick 裡只記一個旗標，真正拍是在下一次繪製<b>之後</b>。
             // tick 的時候這一幀還沒畫完，當場拍會拍到上一幀，

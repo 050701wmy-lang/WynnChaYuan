@@ -88,12 +88,18 @@ public final class TrackerListener {
      */
     @SubscribeEvent
     public void onWorldState(WorldStateEvent event) {
+        com.wynnchayuan.ai.AiTranslations.sessionChanged(
+                net.minecraft.client.Minecraft.getInstance().level != null);
+        ChatBlock.clear();
         TrackerOverlay.clear();
         com.wynnchayuan.render.DialogueOverlay.clear();
     }
 
     @SubscribeEvent
     public void onCharacterUpdate(CharacterUpdateEvent event) {
+        com.wynnchayuan.ai.AiTranslations.sessionChanged(
+                net.minecraft.client.Minecraft.getInstance().level != null);
+        ChatBlock.clear();
         TrackerOverlay.clear();
         com.wynnchayuan.render.DialogueOverlay.clear();
     }

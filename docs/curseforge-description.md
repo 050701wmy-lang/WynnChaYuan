@@ -64,7 +64,7 @@ Switch under F6 → Data, without changing the game's language.
 
 ### Install
 
-- Minecraft **1.21.11**, **Fabric**
+- Minecraft **26.2**, **Fabric**
 - [Wynntils](https://www.curseforge.com/minecraft/mc-mods/wynntils) **4.2+**
 - [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 
@@ -146,7 +146,7 @@ Code: [GNU AGPLv3 or later](https://github.com/LyuChaCha/WynnChaYuan/blob/main/L
 
 ### 安裝
 
-- Minecraft **1.21.11**、**Fabric**
+- Minecraft **26.2**、**Fabric**
 - [Wynntils](https://www.curseforge.com/minecraft/mc-mods/wynntils) **4.2 以上**
 - [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 

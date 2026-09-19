@@ -1871,6 +1871,19 @@ public final class LineTranslator {
      */
     public static Component translate(StyledText line, TranslationStore store,
                                       boolean centered, boolean leftAligned) {
+        Component official = translateOfficial(line, store, centered, leftAligned);
+        if (official != null) return official;
+        Component ai = translateAi(line, store, "TEXT", true);
+        return ai == null ? null : unslant(realign(line, ai, centered, leftAligned));
+    }
+
+    /** Official-only probe, also used by the typewriter and chat block assembler. */
+    public static Component translateOfficial(StyledText line, TranslationStore store) {
+        return translateOfficial(line, store, true, false);
+    }
+
+    public static Component translateOfficial(StyledText line, TranslationStore store,
+                                               boolean centered, boolean leftAligned) {
         Component whole = translateWholeLine(line, store, centered, leftAligned);
         if (whole != null) {
             return unslant(whole);
@@ -1879,6 +1892,26 @@ public final class LineTranslator {
         Component perLine = translatePerLine(line, store, centered);
         return unslant(perLine != null ? perLine
                                        : translateSegments(line, store, centered, leftAligned));
+    }
+
+    /** Call only after all official lookup paths failed; retains existing style reconstruction. */
+    public static Component translateAi(StyledText line, TranslationStore store,
+                                         String type, boolean allowRequest) {
+        LineParts parts = LineParts.of(line);
+        String translated = com.wynnchayuan.ai.AiTranslations.fallback(
+                parts.template(), type, store, allowRequest);
+        if (translated == null) return null;
+        Component result = rebuild(translated, parts, store);
+        if (result != null) com.wynnchayuan.capture.OwnOutputs.note(result);
+        return result == null ? null : unslant(result);
+    }
+
+    public static Component translateChatWithAi(StyledText line, TranslationStore store) {
+        Component official = translateChat(line, store);
+        if (official == null) official = translateOfficial(line, store);
+        if (official != null) return official;
+        Component ai = translateAi(line, store, "CHAT", true);
+        return ai == null ? null : unslant(realignChat(line, ai, null, false));
     }
 
     /**
@@ -3765,7 +3798,7 @@ public final class LineTranslator {
             translated = labelByLine(parts.template(), store);
         }
         if (translated == null || translated.isBlank()) {
-            return null;
+            return translateAi(label, store, "LABEL", true);
         }
         Component rebuilt = rebuild(translated, parts, store);
         return rebuilt == null ? null : unslant(rebuilt);
@@ -7735,8 +7768,12 @@ public final class LineTranslator {
                 return null;
             }
         }
-        ChatFormatting named = ChatFormatting.getByName(spec);
-        return named == null ? null : base.applyFormat(named);
+        try {
+            return base.applyFormat(ChatFormatting.valueOf(
+                    spec.toUpperCase(java.util.Locale.ROOT)));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /** {@code {~N}} 的長度：左括號、波浪、一位數字、右括號。 */

@@ -5,7 +5,7 @@ import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.capture.ChatLog;
 import com.wynnchayuan.render.Colors;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -18,7 +18,7 @@ import java.util.List;
  * 「複製聊天」的挑選畫面。
  *
  * <h2>為什麼不是滑鼠指哪就複製哪</h2>
- * 那需要問 Minecraft「游標下面是第幾行聊天」。1.21.11 的 {@code ChatComponent}
+ * 那需要問 Minecraft「游標下面是第幾行聊天」。26.2 的 {@code ChatComponent}
  * 沒有公開這件事，資料是私有的，得靠 mixin 挖，還要自己重算它的排版幾何——
  * 而這個模組到目前為止一個 mixin 都沒有。
  *
@@ -102,12 +102,12 @@ public final class ChatCopyScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
-        super.render(g, mouseX, mouseY, partial);
-        g.drawCenteredString(this.font, this.title, this.width / 2, 16, Colors.TEXT);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partial) {
+        super.extractRenderState(g, mouseX, mouseY, partial);
+        g.centeredText(this.font, this.title, this.width / 2, 16, Colors.TEXT);
 
         if (rows.isEmpty()) {
-            g.drawCenteredString(this.font,
+            g.centeredText(this.font,
                     T.c(WynnChaYuan.config().chatCopy()
                             ? "chatcopy.empty" : "chatcopy.disabled")
                             .withStyle(ChatFormatting.GRAY),
@@ -121,7 +121,7 @@ public final class ChatCopyScreen extends Screen {
         int height = shown * LINE_H + PAD * 2;
 
         g.fill(left, TOP, left + width, TOP + height, PANEL_BG);
-        g.renderOutline(left, TOP, width, height, PANEL_BORDER);
+        g.outline(left, TOP, width, height, PANEL_BORDER);
 
         int over = entryAt(mouseX, mouseY);
         for (int i = 0; i < shown; i++) {
@@ -131,7 +131,7 @@ public final class ChatCopyScreen extends Screen {
                 g.fill(left + 1, y - 1, left + width - 1, y + LINE_H - 1, ROW_HOVER);
             }
             // 原樣畫出來——顏色、粗體、圖示都在原本的 Component 裡
-            g.drawString(this.font, row.line(), left + PAD, y, Colors.TEXT, false);
+            g.text(this.font, row.line(), left + PAD, y, Colors.TEXT, false);
             if (row.last() && i + 1 < shown) {
                 g.fill(left + PAD, y + LINE_H - 1, left + width - PAD,
                        y + LINE_H, 0x22FFFFFF);
@@ -139,11 +139,11 @@ public final class ChatCopyScreen extends Screen {
         }
 
         if (System.currentTimeMillis() - copiedAt < COPIED_MS) {
-            g.drawCenteredString(this.font,
+            g.centeredText(this.font,
                     T.c("chatcopy.copied").withStyle(ChatFormatting.GREEN),
                     this.width / 2, this.height - 44, Colors.TEXT);
         } else {
-            g.drawCenteredString(this.font,
+            g.centeredText(this.font,
                     T.c("chatcopy.hint").withStyle(ChatFormatting.DARK_GRAY),
                     this.width / 2, this.height - 44, Colors.FAINT);
         }
@@ -166,7 +166,7 @@ public final class ChatCopyScreen extends Screen {
         return -1;
     }
 
-    // 1.21.11 把滑鼠事件包成 MouseButtonEvent，不再是三個散的參數。
+    // 26.2 的滑鼠事件包成 MouseButtonEvent，不再是三個散的參數。
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event,
                                 boolean doubleClick) {

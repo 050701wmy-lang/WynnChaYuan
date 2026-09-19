@@ -75,11 +75,14 @@ public final class WynntilsText {
         if (line == null || line.isEmpty()) {
             return line;
         }
-        var translated = LineTranslator.translate(line, store);
+        var translated = LineTranslator.translateOfficial(line, store);
         if (translated != null) {
             return StyledText.fromComponent(translated);
         }
-        return byPart(line, store);
+        StyledText officialParts = byPart(line, store);
+        if (officialParts != line) return officialParts;
+        var ai = LineTranslator.translateAi(line, store, "TEXT", true);
+        return ai == null ? line : StyledText.fromComponent(ai);
     }
 
     /**
@@ -107,7 +110,7 @@ public final class WynntilsText {
                 out.append(one.getComponent());
                 continue;
             }
-            net.minecraft.network.chat.Component done = LineTranslator.translate(one, store);
+            net.minecraft.network.chat.Component done = LineTranslator.translateOfficial(one, store);
             if (done == null) {
                 // 這一段自己就是「類型 - 名稱」：實機的追蹤欄整行只有一個顏色，
                 // Wynntils 送過來就是一整段，上面那道「一段一段查」沒有東西可以拆。
@@ -239,9 +242,11 @@ public final class WynntilsText {
             return text;
         }
         synchronized (MARKERS) {
-            if (markerStore != store) {
+            long revision = com.wynnchayuan.ai.AiTranslations.revision();
+            if (markerStore != store || markerRevision != revision) {
                 MARKERS.clear();
                 markerStore = store;
+                markerRevision = revision;
             }
             String hit = MARKERS.get(text);
             if (hit == null) {
@@ -250,7 +255,7 @@ public final class WynntilsText {
                 if (MARKERS.size() > 256) {
                     MARKERS.clear();
                 }
-                MARKERS.put(text, hit);
+                if (translated != null || !aiEnabled()) MARKERS.put(text, hit);
             }
             return hit;
         }
@@ -258,6 +263,7 @@ public final class WynntilsText {
 
     private static final java.util.Map<String, String> MARKERS = new java.util.HashMap<>();
     private static TranslationStore markerStore;
+    private static long markerRevision = -1;
 
     /** mixin 的入口：快捷列上方那行手持物品名稱。見 {@code HeldItemNameMixin}。 */
     public static net.minecraft.network.chat.Component heldItemName(
@@ -308,16 +314,18 @@ public final class WynntilsText {
         if (name == null || store == null || config == null || !config.translateNametags()) {
             return name;
         }
-        if (store != barStore || BARS.size() > 256) {
+        long revision = com.wynnchayuan.ai.AiTranslations.revision();
+        if (store != barStore || barRevision != revision || BARS.size() > 256) {
             BARS.clear();
             barStore = store;
+            barRevision = revision;
         }
         net.minecraft.network.chat.Component hit = BARS.get(name);
         if (hit == null) {
             StyledText text = StyledText.fromComponent(name);
             StyledText shown = line(text, store);
             hit = shown == text ? name : shown.getComponent();
-            BARS.put(name, hit);
+            if (shown != text || !aiEnabled()) BARS.put(name, hit);
         }
         return hit;
     }
@@ -325,6 +333,11 @@ public final class WynntilsText {
     private static final java.util.Map<net.minecraft.network.chat.Component,
             net.minecraft.network.chat.Component> BARS = new java.util.HashMap<>();
     private static TranslationStore barStore;
+    private static long barRevision = -1;
+
+    private static boolean aiEnabled() {
+        return WynnChaYuan.ai() != null && WynnChaYuan.ai().config().enabled();
+    }
 
     /**
      * mixin 的入口：Wynntils 通知框（畫面中下方帶暗底的那一行）。

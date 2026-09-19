@@ -10,7 +10,7 @@ import java.util.List;
  *
  * <h2>為什麼自己記一份</h2>
  * 想做的是「挑一則訊息、把它複製走」。直覺的做法是去問 Minecraft
- * 「滑鼠指著第幾行」，但 1.21.11 的 {@code ChatComponent} 沒有公開那個方法，
+ * 「滑鼠指著第幾行」，但 26.2 的 {@code ChatComponent} 沒有公開那個方法，
  * 真正的資料（{@code trimmedMessages}、{@code chatScrollbarPos}）都是私有的，
  * 得靠 mixin 挖進去，還要自己重算一次它的排版幾何。
  *

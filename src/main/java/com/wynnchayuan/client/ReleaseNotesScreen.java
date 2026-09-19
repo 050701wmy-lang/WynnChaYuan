@@ -4,7 +4,7 @@ import com.wynnchayuan.Releases;
 import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.render.Colors;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -143,15 +143,15 @@ public final class ReleaseNotesScreen extends Screen {
     private static final int HINT_H = 14;
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        super.render(g, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
         int cx = this.width / 2;
-        g.drawCenteredString(this.font, this.title, cx, 16, Colors.TEXT);
+        g.centeredText(this.font, this.title, cx, 16, Colors.TEXT);
 
         String latest = Releases.newer();
         String running = WynnChaYuan.version();
-        g.drawCenteredString(this.font, latest != null
+        g.centeredText(this.font, latest != null
                         ? T.c("notes.newer", latest, running)
                                 .withStyle(ChatFormatting.YELLOW)
                         : T.c("notes.uptodate", running)
@@ -160,7 +160,7 @@ public final class ReleaseNotesScreen extends Screen {
 
         List<String> versions = Releases.versions();
         if (versions.isEmpty()) {
-            g.drawCenteredString(this.font,
+            g.centeredText(this.font,
                     T.c("notes.none").withStyle(ChatFormatting.DARK_GRAY),
                     cx, top() + 20, Colors.FAINT);
             return;
@@ -191,7 +191,7 @@ public final class ReleaseNotesScreen extends Screen {
         contentHeight = total;
 
         if (contentHeight > bottom() - top()) {
-            g.drawCenteredString(this.font,
+            g.centeredText(this.font,
                     T.c("notes.scroll").withStyle(ChatFormatting.DARK_GRAY),
                     cx, bottom() + 3, Colors.FAINT);
         }
@@ -213,21 +213,21 @@ public final class ReleaseNotesScreen extends Screen {
         return h + PAD;
     }
 
-    private void drawCard(GuiGraphics g, int x, int y, int w, int h,
+    private void drawCard(GuiGraphicsExtractor g, int x, int y, int w, int h,
                           String version, Releases.Notes notes, int accent,
                           boolean current) {
         g.fill(x, y, x + w, y + h, current ? CARD_BG_CURRENT : CARD_BG);
-        g.renderOutline(x, y, w, h, accent);
+        g.outline(x, y, w, h, accent);
         // 左緣多一條實色的邊。純外框的卡片疊在一起看起來像表格，
         // 加這一條才有「一張一張」的樣子。
         g.fill(x, y, x + 2, y + h, accent);
 
         int textY = y + PAD;
-        g.drawString(this.font, Component.literal("v" + version),
+        g.text(this.font, Component.literal("v" + version),
                 x + PAD, textY, accent, false);
         if (current) {
             int at = x + PAD + this.font.width("v" + version) + 6;
-            g.drawString(this.font,
+            g.text(this.font,
                     T.c("notes.current").withStyle(ChatFormatting.DARK_GRAY),
                     at, textY, Colors.FAINT, false);
         }
@@ -235,17 +235,17 @@ public final class ReleaseNotesScreen extends Screen {
 
         if (!notes.headline().isBlank()) {
             for (FormattedCharSequence line : wrap(notes.headline(), w - PAD * 2)) {
-                g.drawString(this.font, line, x + PAD, textY, Colors.TEXT, false);
+                g.text(this.font, line, x + PAD, textY, Colors.TEXT, false);
                 textY += ROW;
             }
             textY += 2;
         }
         for (String item : notes.items()) {
-            g.drawString(this.font, Component.literal("·")
+            g.text(this.font, Component.literal("·")
                             .withStyle(ChatFormatting.DARK_GRAY),
                     x + PAD, textY, Colors.DIM, false);
             for (FormattedCharSequence line : wrap(item, w - PAD * 2 - BULLET)) {
-                g.drawString(this.font, line, x + PAD + BULLET, textY,
+                g.text(this.font, line, x + PAD + BULLET, textY,
                              Colors.SUBTLE, false);
                 textY += ROW;
             }
@@ -265,6 +265,6 @@ public final class ReleaseNotesScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 }

@@ -6,7 +6,7 @@ import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.render.Boxes;
 import com.wynnchayuan.render.Colors;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -314,8 +314,8 @@ public final class PositionScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        super.render(g, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
         // 標題列跟設定畫面同一套（含模組圖示），兩個畫面看起來才像同一個東西。
         Cards.header(g, this.font, this.width, T.s("pos.title"), T.s("pos.hint"));
@@ -347,7 +347,7 @@ public final class PositionScreen extends Screen {
      * <p>先前確認訊息浮在畫面中間、說明浮在最上面，兩句話各據一方，
      * 而中間那一大片正是要拖框的地方——訊息會壓在框上。
      */
-    private void footer(GuiGraphics g, int mouseX, int mouseY) {
+    private void footer(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         int w = Math.min(420, this.width - 20);
         int x = (this.width - w) / 2;
         int y = this.height - FOOT + 8;
@@ -387,12 +387,12 @@ public final class PositionScreen extends Screen {
                 text = T.s("pos.dragging", under.label);
             }
         }
-        g.drawString(this.font,
+        g.text(this.font,
                 Component.literal(Cards.fit(this.font, text, w - 8)),
                 x + 4, y + 6, colour);
     }
 
-    private void drawBox(GuiGraphics g, Box box, boolean hovered) {
+    private void drawBox(GuiGraphicsExtractor g, Box box, boolean hovered) {
         int accent = WynnChaYuan.config().accentARGB();
         boolean active = box == dragging;
 
@@ -403,7 +403,7 @@ public final class PositionScreen extends Screen {
         }
         g.fill(box.x, box.y - TITLE_H, box.x + box.w, box.y - 1, 0xD00B1119);
         g.fill(box.x, box.y - TITLE_H, box.x + box.w, box.y - TITLE_H + 1, accent);
-        g.drawString(this.font,
+        g.text(this.font,
                 active ? T.c("pos.grabbed", box.label) : Component.literal(box.label),
                 box.x + 4, box.y - 10, accent);
 
@@ -411,7 +411,7 @@ public final class PositionScreen extends Screen {
 
         int ty = box.y + 6;
         for (Component line : sampleFor(box.which)) {
-            g.drawString(this.font, line, box.x + 6, ty, Colors.TEXT);
+            g.text(this.font, line, box.x + 6, ty, Colors.TEXT);
             ty += this.font.lineHeight + 1;
         }
 
@@ -425,7 +425,7 @@ public final class PositionScreen extends Screen {
      *
      * <p>只有滑鼠指著那個框時才畫得明顯；五個框全都亮著角落會很吵。
      */
-    private void drawGrip(GuiGraphics g, Box box, int accent, boolean lit) {
+    private void drawGrip(GuiGraphicsExtractor g, Box box, int accent, boolean lit) {
         int colour = lit ? accent : (accent & 0x00FFFFFF) | 0x50000000;
         int right = box.x + box.w - 2;
         int bottom = box.y + box.h - 2;
@@ -469,6 +469,6 @@ public final class PositionScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 }

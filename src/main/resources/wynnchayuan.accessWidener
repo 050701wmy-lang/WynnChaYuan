@@ -1,4 +1,4 @@
-accessWidener	v2	named
+accessWidener	v2	official
 
 # Wynntils 的 PartStyle#getStyle() 會用到 Style 的私有建構子。
 # 遊戲裡是 Wynntils 自己的 accessWidener 打開的（我們依賴它，所以執行期本來就通），

@@ -60,6 +60,47 @@ public final class ChatBlock {
 
     private static final List<Row> pending = new ArrayList<>();
     private static long last;
+    private record Waiting(StyledText original, long epoch, long expires) {}
+    private static final List<Waiting> waitingAi = new ArrayList<>();
+    private static long nextAiPoll;
+
+    /** Local supplemental output only; never sends a message to the server. */
+    public static synchronized void awaitAi(StyledText original) {
+        var ai = WynnChaYuan.ai();
+        if (ai == null || !ai.config().enabled()) return;
+        if (com.wynnchayuan.render.ThirdPartyLiterals.reserved(original.getStringWithoutFormatting())
+                || com.wynnchayuan.capture.PlayerDataFilter.carriesPlayerData(
+                        com.wynnchayuan.capture.GlyphSplitter.toTemplate(original))) return;
+        if (waitingAi.stream().anyMatch(w -> w.original().getString().equals(original.getString()))) return;
+        if (waitingAi.size() >= 32) waitingAi.remove(0);
+        waitingAi.add(new Waiting(original, ai.epoch(), System.currentTimeMillis() + 45_000));
+    }
+
+    private static void tickAi() {
+        long now = System.currentTimeMillis();
+        if (now < nextAiPoll) return;
+        nextAiPoll = now + 250;
+        var ai = WynnChaYuan.ai();
+        var mc = Minecraft.getInstance();
+        if (ai == null || mc == null || mc.player == null || !ai.config().enabled()
+                || WynnChaYuan.config().chatMode() == com.wynnchayuan.CollectorConfig.ChatMode.OFF) {
+            waitingAi.clear();
+            return;
+        }
+        List<Component> ready = new ArrayList<>();
+        waitingAi.removeIf(w -> {
+            if (w.epoch() != ai.epoch() || w.expires() < now) return true;
+            Component hit = LineTranslator.translateChatWithAi(w.original(), WynnChaYuan.translations());
+            if (hit == null) return false;
+            ready.add(hit);
+            return true;
+        });
+        for (Component hit : ready) {
+            remember(hit);
+            com.wynnchayuan.capture.OwnOutputs.note(hit);
+            mc.player.sendSystemMessage(hit);
+        }
+    }
 
     /**
      * 收一行。
@@ -80,6 +121,7 @@ public final class ChatBlock {
         if (ready(System.currentTimeMillis())) {
             flush();
         }
+        tickAi();
     }
 
     /**
@@ -104,13 +146,14 @@ public final class ChatBlock {
     public static synchronized void clear() {
         pending.clear();
         mine.clear();
+        waitingAi.clear();
     }
 
     /**
      * 我們自己剛送出去的那幾則。
      *
      * <h2>為什麼要記</h2>
-     * {@code displayClientMessage} 會<b>再觸發一次聊天事件</b>，於是我們送出去的
+     * {@code sendSystemMessage} 會<b>再觸發一次聊天事件</b>，於是我們送出去的
      * 譯文又被當成新訊息收回來、再翻一次。診斷檔裡因此出現整段中文被拿去查表：
      *
      * <pre>
@@ -155,10 +198,17 @@ public final class ChatBlock {
             whole = stacked(rows);
         }
         if (whole != null) {
-            // 先記下來再送：displayClientMessage 會同步再觸發一次聊天事件，
+            // 先記下來再送：sendSystemMessage 會同步再觸發一次聊天事件，
             // 記晚了就來不及擋。見 #mine。
             remember(whole);
-            mc.player.displayClientMessage(whole, false);
+            mc.player.sendSystemMessage(whole);
+        } else {
+            net.minecraft.network.chat.MutableComponent original = Component.empty();
+            for (Row row : rows) {
+                if (!original.getString().isEmpty()) original.append("\n");
+                original.append(row.original().getComponent());
+            }
+            awaitAi(StyledText.fromComponent(original));
         }
     }
 

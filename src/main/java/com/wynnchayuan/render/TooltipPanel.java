@@ -7,7 +7,7 @@ import com.wynnchayuan.translate.LineTranslator;
 import com.wynnchayuan.translate.TranslationStore;
 import com.wynntils.core.text.StyledText;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
 import net.minecraft.network.chat.Component;
@@ -39,7 +39,7 @@ public final class TooltipPanel {
      *
      * @param tooltip 原始 tooltip 的每一行（我們只讀不改）
      */
-    public static void render(GuiGraphics graphics, List<Component> tooltip,
+    public static void render(GuiGraphicsExtractor graphics, List<Component> tooltip,
                               int mouseX, int mouseY, TranslationStore store) {
         if (tooltip == null || tooltip.isEmpty()) {
             return;
@@ -101,7 +101,7 @@ public final class TooltipPanel {
 
         // 位置我們自己算好了，所以用一個原樣回傳座標的 positioner，
         // 不讓 Minecraft 的預設定位器把面板挪回滑鼠旁邊。
-        graphics.renderTooltip(mc.font, components, x, y, EXACT, null);
+        graphics.tooltip(mc.font, components, x, y, EXACT, null);
         // 記下這一塊在哪，截圖才知道要裁哪裡。名字取自譯文第一行——
         // 那通常就是物品名稱，當檔名剛好。
         String title = lines.isEmpty() ? null : lines.get(0).getString();
@@ -509,7 +509,7 @@ public final class TooltipPanel {
      * 然後夾在畫面內。高度是估的（遊戲每行 10px 再加內距），所以寧可多框幾
      * 像素——多框到的是背景，少框到的是字。
      */
-    public static void noteShot(GuiGraphics graphics, List<Component> tooltip,
+    public static void noteShot(GuiGraphicsExtractor graphics, List<Component> tooltip,
                                 int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.font == null || tooltip == null || tooltip.isEmpty()) {

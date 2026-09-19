@@ -16,7 +16,7 @@ import java.util.List;
  * （整個原始碼裡只有類別定義，沒有任何 post 呼叫），所以用不了。
  *
  * <p>因此拆成兩步：{@code Pre} 只<b>記下</b>內容，實際繪製交給 Fabric 的
- * {@code ScreenEvents.afterRender}——那個時機在整個畫面（含 tooltip）都畫完之後。
+ * {@code ScreenEvents.afterExtract}——那個時機在畫面擷取狀態（含 tooltip）完成之後。
  */
 public final class PendingTooltip {
 

@@ -80,7 +80,7 @@ Switch under F6 → Data, without changing the game's language.
 
 | Requirement | Version |
 |---|---|
-| Minecraft | 1.21.11 |
+| Minecraft | 26.2 |
 | Loader | Fabric |
 | Dependencies | [Wynntils](https://modrinth.com/mod/wynntils) 4.2+, [Fabric API](https://modrinth.com/mod/fabric-api) |
 
@@ -176,7 +176,7 @@ Code: [GNU AGPLv3 or later](https://github.com/LyuChaCha/WynnChaYuan/blob/main/L
 
 | 需求 | 版本 |
 |---|---|
-| Minecraft | 1.21.11 |
+| Minecraft | 26.2 |
 | 載入器 | Fabric |
 | 前置 | [Wynntils](https://modrinth.com/mod/wynntils) 4.2 以上、[Fabric API](https://modrinth.com/mod/fabric-api) |
 

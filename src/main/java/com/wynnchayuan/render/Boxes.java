@@ -3,7 +3,7 @@ package com.wynnchayuan.render;
 import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.capture.GlyphSplitter;
 import com.wynnchayuan.translate.SpaceOffset;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -22,7 +22,7 @@ public final class Boxes {
 
     private Boxes() {}
 
-    public static void draw(GuiGraphics g, int x, int y, int w, int h) {
+    public static void draw(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         draw(g, x, y, w, h, 1.0f);
     }
 
@@ -32,7 +32,7 @@ public final class Boxes {
      * <p>底色與邊線要一起淡，只淡其中一個的話收尾那幾幀會看到一個
      * 沒有內容的空框，比直接消失還怪。
      */
-    public static void draw(GuiGraphics g, int x, int y, int w, int h, float alpha) {
+    public static void draw(GuiGraphicsExtractor g, int x, int y, int w, int h, float alpha) {
         int bg = Colors.fade(WynnChaYuan.config().backgroundARGB(), alpha);
         int border = Colors.fade(WynnChaYuan.config().accentARGB(), alpha);
         g.fill(x, y, x + w, y + h, bg);

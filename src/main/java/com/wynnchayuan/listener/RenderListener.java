@@ -10,7 +10,7 @@ import com.wynnchayuan.render.TooltipPanel;
 import com.wynnchayuan.render.LookAtTranslator;
 import com.wynnchayuan.render.TrackerOverlay;
 import com.wynntils.mc.event.ItemTooltipRenderEvent;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -102,9 +102,9 @@ public final class RenderListener {
     /**
      * 整個畫面（含原始 tooltip）都畫完之後才畫翻譯面板。
      *
-     * <p>由 {@code ScreenEvents.afterRender} 每幀呼叫。
+     * <p>由 {@code ScreenEvents.afterExtract} 每幀呼叫。
      */
-    public static void renderAfterScreen(GuiGraphics graphics, int mouseX, int mouseY) {
+    public static void renderAfterScreen(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         CollectorConfig.TooltipMode mode = WynnChaYuan.config().tooltipMode();
         if (mode == CollectorConfig.TooltipMode.REPLACE) {
             // 就地取代模式不畫東西，只記下截圖要裁的框——遊戲此時已經把
@@ -138,7 +138,7 @@ public final class RenderListener {
     }
 
     /** 對話小框由 HUD 每幀呼叫，見 {@link DialogueOverlay#render}。 */
-    public static void renderHud(GuiGraphics graphics) {
+    public static void renderHud(GuiGraphicsExtractor graphics) {
         // 聊天那邊攢著的譯文，安靜夠久就送出去。
         //
         // 掛在算繪路徑上是因為它<b>每一幀都跑、而且在主執行緒</b>——

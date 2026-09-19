@@ -37,7 +37,7 @@ public final class TitleListener {
             return;
         }
         event.setCanceled(true);
-        send(() -> Minecraft.getInstance().gui.setTitle(hit));
+        send(() -> Minecraft.getInstance().gui.hud.setTitle(hit));
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -47,7 +47,7 @@ public final class TitleListener {
             return;
         }
         event.setCanceled(true);
-        send(() -> Minecraft.getInstance().gui.setSubtitle(hit));
+        send(() -> Minecraft.getInstance().gui.hud.setSubtitle(hit));
     }
 
     private static void send(Runnable action) {

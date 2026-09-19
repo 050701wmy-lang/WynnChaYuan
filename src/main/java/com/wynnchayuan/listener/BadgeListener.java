@@ -73,7 +73,6 @@ public final class BadgeListener {
                     badge,
                     !state.isDiscrete,
                     state.lightCoords,
-                    state.distanceToCameraSq,
                     event.getCameraRenderState());
         } catch (Throwable t) {
             // 這只是裝飾。名牌每幀會跑好幾次，出事絕不能拖垮畫面

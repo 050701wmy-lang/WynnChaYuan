@@ -6,7 +6,7 @@ import com.wynnchayuan.translate.LineTranslator;
 import com.wynnchayuan.translate.TranslationStore;
 import com.wynntils.core.text.StyledText;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -30,6 +30,11 @@ public final class TrackerOverlay {
     private static final int BORDER = 0xFF3A1E5C;
 
     private static volatile List<Component> current = List.of();
+    private static String originalName;
+    private static StyledText originalTask;
+    private static Object originalType;
+    private static long renderedRevision = -1;
+    private static long lastRefresh;
 
     private TrackerOverlay() {}
 
@@ -44,6 +49,10 @@ public final class TrackerOverlay {
      */
     public static void setCurrent(Object type, String name, StyledText task,
                                   TranslationStore store) {
+        originalType = type;
+        originalName = name;
+        originalTask = task;
+        renderedRevision = com.wynnchayuan.ai.AiTranslations.revision();
         List<Component> lines = new ArrayList<>();
         boolean any = false;
 
@@ -77,6 +86,9 @@ public final class TrackerOverlay {
 
     public static void clear() {
         current = List.of();
+        extras = List.of();
+        originalName = null;
+        originalTask = null;
     }
 
     /**
@@ -119,7 +131,15 @@ public final class TrackerOverlay {
         extras = lines == null ? List.of() : List.copyOf(lines);
     }
 
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
+        long now = System.nanoTime();
+        boolean retry = WynnChaYuan.ai() != null && WynnChaYuan.ai().config().enabled()
+                && now - lastRefresh >= 1_000_000_000L;
+        if ((renderedRevision != com.wynnchayuan.ai.AiTranslations.revision() || retry)
+                && (originalName != null || originalTask != null) && stillTracking()) {
+            lastRefresh = now;
+            setCurrent(originalType, originalName, originalTask, WynnChaYuan.translations());
+        }
         List<Component> lines = current;
         // 就地取代模式下，右上那一欄本身已經是中文了（見 WynntilsText），
         // 這裡再畫一份就是同一件事出現兩次。
@@ -203,7 +223,7 @@ public final class TrackerOverlay {
         for (int i = 0; i < firstRows; i++) {
             graphics.pose().pushMatrix();
             graphics.pose().scale(NAME_SCALE, NAME_SCALE);
-            graphics.drawString(mc.font, wrapped.get(i),
+            graphics.text(mc.font, wrapped.get(i),
                     Math.round((x + PADDING) / NAME_SCALE),
                     Math.round(textY / NAME_SCALE),
                     NAME_COLOR);
@@ -211,7 +231,7 @@ public final class TrackerOverlay {
             textY += nameHeight;
         }
         for (int i = firstRows; i < wrapped.size(); i++) {
-            graphics.drawString(mc.font, wrapped.get(i), x + PADDING, textY,
+            graphics.text(mc.font, wrapped.get(i), x + PADDING, textY,
                     Colors.TEXT);
             textY += lineHeight;
         }

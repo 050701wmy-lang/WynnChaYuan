@@ -123,7 +123,10 @@ public final class CorpusExportTest {
         try (Stream<Path> files = Files.walk(Path.of("src/main/java"))) {
             for (Path file : files.filter(p -> p.toString().endsWith(".java")).toList()) {
                 String text = Files.readString(file, StandardCharsets.UTF_8);
-                if (send.matcher(text).find()) {
+                // The opt-in AI provider is the only intentional upload path.
+                // Capture/export code must remain local-only.
+                boolean aiProvider = file.equals(Path.of("src/main/java/com/wynnchayuan/ai/OpenAiCompatibleProvider.java"));
+                if (send.matcher(text).find() && !aiProvider) {
                     senders.add(file.getFileName().toString());
                 }
                 Matcher m = host.matcher(text);
@@ -132,7 +135,7 @@ public final class CorpusExportTest {
                 }
             }
         }
-        check("★ 模組原始碼裡沒有任何把資料送出去的 HTTP 呼叫"
+        check("★ 除了使用者啟用的 AI Provider，其餘程式碼沒有上傳 HTTP 呼叫"
                         + (senders.isEmpty() ? "" : "：" + senders),
                 senders.isEmpty());
         check("掃到了寫死的網址（確認掃描有意義）：" + hosts, !hosts.isEmpty());

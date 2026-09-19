@@ -6,7 +6,7 @@ import com.wynnchayuan.translate.LineTranslator;
 import com.wynnchayuan.translate.TranslationStore;
 import com.wynntils.core.text.StyledText;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -87,6 +87,12 @@ public final class DialogueOverlay {
      * 不必依賴一個其實不可靠的「對話結束」事件。
      */
     private static volatile long lastUpdate = 0;
+    private static StyledText latestOriginal;
+    private static boolean latestHasChoices;
+    private static long latestAt;
+    private static long renderedRevision = -1;
+    private static long choicesRevision = -1;
+    private static long nextAiRefresh;
 
     /** 說話者那一行的顏色。刻意跟內文分開，一眼就看得出誰在講。 */
     private static final net.minecraft.network.chat.TextColor SPEAKER_COLOUR =
@@ -133,13 +139,15 @@ public final class DialogueOverlay {
             // 框已經淡掉了（見 Fade 與 dialogueHoldMs）。
             lastUpdate = System.currentTimeMillis();
         }
-        if (incoming.equals(rawChoices)) {
+        long revision = com.wynnchayuan.ai.AiTranslations.revision();
+        if (incoming.equals(rawChoices) && choicesRevision == revision) {
             return;                            // 沒變就不必重翻
         }
         if (scrolling(incoming)) {
             return;                            // 跑馬燈捲到一半，見 #scrolling
         }
         rawChoices = incoming;
+        choicesRevision = revision;
         choices = incoming.isEmpty()
                 || WynnChaYuan.config().choiceMode() == CollectorConfig.DialogueMode.OFF
                 ? List.of()
@@ -177,6 +185,15 @@ public final class DialogueOverlay {
      */
     public static void setCurrent(StyledText dialogue, TranslationStore store,
                                   boolean hasChoices) {
+        latestOriginal = dialogue;
+        latestHasChoices = hasChoices;
+        latestAt = System.currentTimeMillis();
+        long revision = com.wynnchayuan.ai.AiTranslations.revision();
+        if (renderedRevision != revision) {
+            settledFor = List.of();
+            shown = List.of();
+            renderedRevision = revision;
+        }
         if (hasChoices && dialogue != null) {
             // 選項對話的實際結構還沒定案，先把原文記下來，下一輪照真實資料實作
             com.wynnchayuan.translate.FlowedDebug.noteChoices(dialogue.getString());
@@ -232,7 +249,8 @@ public final class DialogueOverlay {
                 continue;
             }
 
-            LineResult result = translateLine(line, template, store, steady);
+            LineResult result = translateLine(line, template, store, steady,
+                    com.wynnchayuan.ai.AiTranslations.settled(template, "panel-" + i));
             Component translated = result == null ? null : result.translated();
             String source = result == null ? null : result.source();
             if (translated != null) {
@@ -286,12 +304,18 @@ public final class DialogueOverlay {
      */
     static LineResult translateLine(StyledText line, String template, TranslationStore store,
                                     boolean steady) {
+        return translateLine(line, template, store, steady,
+                com.wynnchayuan.ai.AiTranslations.settled(template, "panel-test"));
+    }
+
+    private static LineResult translateLine(StyledText line, String template, TranslationStore store,
+                                             boolean steady, boolean aiSteady) {
         // 小框這條路也要認名字，見 DialogueRewriter#learnName。這一句剛認出來的話，
         // 呼叫端傳進來的模板還留著名字本人，要重算一次才對得上語料的 {u}。
         if (DialogueRewriter.learnName(line.getString(), store)) {
             template = com.wynnchayuan.capture.LineParts.of(line).template();
         }
-        Component translated = LineTranslator.translate(line, store);
+        Component translated = LineTranslator.translateOfficial(line, store);
         String source = translated == null ? null : template;
         if (translated != null && !steady && unfinished(template, store)) {
             // 這半句自己剛好也是語料裡的一條：「Not even death saw…」打到第二個字
@@ -316,6 +340,10 @@ public final class DialogueOverlay {
                 translated = LineTranslator.translateKnown(
                         line, store.lookup(source), store);
             }
+        }
+        if (translated == null && source == null) {
+            translated = LineTranslator.translateAi(line, store, "DIALOGUE", steady && aiSteady);
+            if (translated != null) source = template;
         }
         return translated == null ? null : new LineResult(source, translated);
     }
@@ -425,7 +453,8 @@ public final class DialogueOverlay {
         List<List<Component>> out = new ArrayList<>(raw.size());
         for (String each : raw) {
             StyledText line = StyledText.fromString(each);
-            Component hit = LineTranslator.translate(line, store);
+            Component hit = LineTranslator.translateOfficial(line, store);
+            if (hit == null) hit = LineTranslator.translateAi(line, store, "CHOICE", true);
             // 查不到就擺原文——選項不能少，見上面的說明
             out.add(List.copyOf(Boxes.toLines(
                     hit != null ? hit : LineTranslator.untranslated(line))));
@@ -449,6 +478,8 @@ public final class DialogueOverlay {
     }
 
     public static void clear() {
+        latestOriginal = null;
+        DialogueRewriter.forget();
         current = List.of();
         choices = List.of();
         rawChoices = List.of();
@@ -461,7 +492,24 @@ public final class DialogueOverlay {
     }
 
     /** 每幀呼叫。沒有內容時什麼都不畫。 */
-    public static void render(GuiGraphics graphics) {
+    public static void render(GuiGraphicsExtractor graphics) {
+        long revision = com.wynnchayuan.ai.AiTranslations.revision();
+        boolean aiRefresh = WynnChaYuan.ai() != null && WynnChaYuan.ai().config().enabled()
+                && System.currentTimeMillis() >= nextAiRefresh;
+        if (aiRefresh) nextAiRefresh = System.currentTimeMillis() + 250;
+        if (latestOriginal != null && (renderedRevision != revision || aiRefresh)
+                && System.currentTimeMillis() - latestAt < WynnChaYuan.config().dialogueHoldMs()) {
+            long received = latestAt;
+            long updated = lastUpdate;
+            setCurrent(latestOriginal, WynnChaYuan.translations(), latestHasChoices);
+            latestAt = received;
+            lastUpdate = updated == 0 && !current.isEmpty() ? received : updated;
+        }
+        if (choicesRevision != revision && !rawChoices.isEmpty()) {
+            long updated = lastUpdate;
+            noteChoices(rawChoices, picked);
+            lastUpdate = updated;
+        }
         List<Component> lines = current;
         List<List<Component>> options = choices;
         if (lines.isEmpty() && options.isEmpty()) {
@@ -544,7 +592,7 @@ public final class DialogueOverlay {
      * <p>寬度<b>固定</b>而不是隨字數變。NPC 是一個字一個字打出來的，寬度跟著
      * 內容跑的話，整句話打完的過程中框會一路長大，看起來像在抽搐。
      */
-    private static void drawInPlace(GuiGraphics graphics, Minecraft mc,
+    private static void drawInPlace(GuiGraphicsExtractor graphics, Minecraft mc,
                                     List<Component> lines, List<Component> options,
                                     float alpha) {
         int boxW = dialogueWidth(Math.max(MIN_BOX_W, Math.min(MAX_BOX_W,
@@ -564,7 +612,7 @@ public final class DialogueOverlay {
             Boxes.draw(graphics, x, y, boxW, bodyH, alpha);
             int textY = y + PADDING;
             for (FormattedCharSequence line : body) {
-                graphics.drawString(mc.font, line, x + PADDING + 1, textY,
+                graphics.text(mc.font, line, x + PADDING + 1, textY,
                         Colors.fade(Colors.TEXT, alpha));
                 textY += lineHeight;
             }
@@ -573,7 +621,7 @@ public final class DialogueOverlay {
                 int nameW = mc.font.width(speaker) + PADDING * 2 + 2;
                 int nameH = mc.font.lineHeight + PADDING;
                 Boxes.draw(graphics, x, y - nameH + 1, nameW, nameH, alpha);
-                graphics.drawString(mc.font, speaker, x + PADDING + 1,
+                graphics.text(mc.font, speaker, x + PADDING + 1,
                         y - nameH + PADDING / 2 + 2,
                         Colors.fade(SPEAKER_COLOUR.getValue() | 0xFF000000, alpha));
             }
@@ -581,7 +629,7 @@ public final class DialogueOverlay {
             // 否則玩家不知道這段話還沒完
             if (needsShift) {
                 int hintW = mc.font.width(SHIFT_HINT);
-                graphics.drawString(mc.font, SHIFT_HINT,
+                graphics.text(mc.font, SHIFT_HINT,
                         x + (boxW - hintW) / 2, y + bodyH + 3,
                         Colors.fade(Colors.TEXT, alpha * 0.75f));
             }
@@ -593,7 +641,7 @@ public final class DialogueOverlay {
             Boxes.draw(graphics, x, pickY, boxW, pickH, alpha);
             int textY = pickY + PADDING;
             for (FormattedCharSequence line : picks) {
-                graphics.drawString(mc.font, line, x + PADDING + 1, textY,
+                graphics.text(mc.font, line, x + PADDING + 1, textY,
                         Colors.fade(Colors.TEXT, alpha));
                 textY += lineHeight;
             }
@@ -614,7 +662,7 @@ public final class DialogueOverlay {
      * <p>位置也接進了 {@code PositionScreen}：使用者拖過就用他拖的，
      * 沒拖過就用右側這個預設錨點。
      */
-    private static void drawChoices(GuiGraphics graphics, Minecraft mc,
+    private static void drawChoices(GuiGraphicsExtractor graphics, Minecraft mc,
                                     List<List<Component>> options, float alpha) {
         CollectorConfig cfg = WynnChaYuan.config();
         int boxW = cfg.hasOverlaySize(CollectorConfig.Overlay.CHOICES)
@@ -669,14 +717,14 @@ public final class DialogueOverlay {
                 graphics.fill(x + 1, textY - ROW_GAP + 1, x + boxW - 1,
                               textY + rowH + ROW_GAP - 1,
                               Colors.fade(SELECTED_BG, alpha));
-                graphics.drawString(mc.font, MARKER, x + PADDING,
+                graphics.text(mc.font, MARKER, x + PADDING,
                         textY + (rowH - mc.font.lineHeight) / 2,
                         Colors.fade(Colors.HIGHLIGHT, alpha));
             }
             int colour = here ? Colors.HIGHLIGHT : Colors.TEXT;
             int lineY = textY;
             for (FormattedCharSequence line : option) {
-                graphics.drawString(mc.font, line, x + PADDING + MARKER_W, lineY,
+                graphics.text(mc.font, line, x + PADDING + MARKER_W, lineY,
                         Colors.fade(colour, alpha));
                 lineY += lineHeight;
             }
@@ -753,7 +801,7 @@ public final class DialogueOverlay {
     private static final int IN_PLACE_MARGIN = 55;
 
     /** @param centerX 框的水平中心；框寬隨內容變，對齊左緣的話短的那一框會偏掉 */
-    private static void draw(GuiGraphics graphics, Minecraft mc, List<Component> lines,
+    private static void draw(GuiGraphicsExtractor graphics, Minecraft mc, List<Component> lines,
                              int centerX, int y, float alpha, boolean withBox) {
         int lineHeight = mc.font.lineHeight + 1;
         int boxW = widthOf(mc, lines);
@@ -769,7 +817,7 @@ public final class DialogueOverlay {
             int lineX = withBox
                     ? x + PADDING
                     : centerX - mc.font.width(line) / 2;
-            graphics.drawString(mc.font, line, lineX, textY,
+            graphics.text(mc.font, line, lineX, textY,
                     Colors.fade(Colors.TEXT, alpha));
             textY += lineHeight;
         }
@@ -813,7 +861,7 @@ public final class DialogueOverlay {
      * <p>寬度一旦是玩家指定的，就不能再讓框去遷就內容——太長的句子要折行，
      * 所以這條路改走 {@code FormattedCharSequence}，跟就地取代那一條一樣。
      */
-    private static void drawSized(GuiGraphics graphics, Minecraft mc,
+    private static void drawSized(GuiGraphicsExtractor graphics, Minecraft mc,
                                   List<Component> lines, int x, int y,
                                   int boxW, float alpha) {
         int lineHeight = mc.font.lineHeight + 1;
@@ -822,7 +870,7 @@ public final class DialogueOverlay {
         Boxes.draw(graphics, x, y, boxW, boxH, alpha);
         int textY = y + PADDING;
         for (FormattedCharSequence row : rows) {
-            graphics.drawString(mc.font, row, x + PADDING, textY,
+            graphics.text(mc.font, row, x + PADDING, textY,
                     Colors.fade(Colors.TEXT, alpha));
             textY += lineHeight;
         }

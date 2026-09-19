@@ -4,7 +4,7 @@ import com.wynnchayuan.CollectorConfig;
 import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.render.Colors;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -69,20 +69,20 @@ public final class CreditsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        super.render(g, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
         int cx = this.width / 2;
         int y = 30;
 
-        g.drawCenteredString(this.font, this.title, cx, y, Colors.TEXT);
+        g.centeredText(this.font, this.title, cx, y, Colors.TEXT);
         y += 14;
-        g.drawCenteredString(this.font,
+        g.centeredText(this.font,
                 Component.literal("v" + WynnChaYuan.version()).withStyle(ChatFormatting.DARK_GRAY),
                 cx, y, Colors.DIM);
         y += 22;
 
-        g.drawCenteredString(this.font,
+        g.centeredText(this.font,
                 T.c("credits.tagline").withStyle(ChatFormatting.GRAY),
                 cx, y, Colors.SUBTLE);
         y += 24;
@@ -98,7 +98,7 @@ public final class CreditsScreen extends Screen {
             y += 14;
             List<Credits.Member> members = section.members();
             if (members.isEmpty()) {
-                g.drawCenteredString(this.font,
+                g.centeredText(this.font,
                         T.c("credits.empty"), cx, y, Colors.FAINT);
                 y += 13;
             }
@@ -120,7 +120,7 @@ public final class CreditsScreen extends Screen {
 
         y = this.height - FOOTER_HEIGHT + 8;
         for (String key : List.of("credits.note1", "credits.note2")) {
-            g.drawCenteredString(this.font,
+            g.centeredText(this.font,
                     T.c(key).withStyle(ChatFormatting.DARK_GRAY), cx, y, Colors.FAINT);
             y += 11;
         }
@@ -174,10 +174,10 @@ public final class CreditsScreen extends Screen {
     }
 
     /** 分區標題：左右各一條同色細線，比純文字更看得出是分隔。 */
-    private void drawSectionTitle(GuiGraphics g, int cx, int y, Credits.Section section) {
+    private void drawSectionTitle(GuiGraphicsExtractor g, int cx, int y, Credits.Section section) {
         String role = section.role();
         int color = section.color();
-        g.drawCenteredString(this.font, Component.literal(role), cx, y, color);
+        g.centeredText(this.font, Component.literal(role), cx, y, color);
 
         int half = this.font.width(role) / 2;
         int faded = (color & 0x00FFFFFF) | 0x60000000;
@@ -191,7 +191,7 @@ public final class CreditsScreen extends Screen {
      * <p>暱稱用分區的顏色，ID 用灰色 —— 兩者都用同一個顏色的話，
      * 一眼看過去分不出哪個是稱呼、哪個是遊戲帳號。
      */
-    private void drawMember(GuiGraphics g, int cx, int y, Credits.Member member, int color) {
+    private void drawMember(GuiGraphicsExtractor g, int cx, int y, Credits.Member member, int color) {
         String name = member.name();
         String id = member.hasHead() ? member.mc() : "";
         int gap = id.isEmpty() ? 0 : 6;
@@ -208,15 +208,15 @@ public final class CreditsScreen extends Screen {
         }
         // 頭像 8px 高、文字 9px，讓文字對到頭像的視覺中線
         int textY = y + (HEAD - 8) / 2;
-        g.drawString(this.font, Component.literal(name), x, textY, color);
+        g.text(this.font, Component.literal(name), x, textY, color);
         if (!id.isEmpty()) {
-            g.drawString(this.font, Component.literal(id), x + nameW + gap, textY, Colors.DIM);
+            g.text(this.font, Component.literal(id), x + nameW + gap, textY, Colors.DIM);
         }
     }
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 
     @Override

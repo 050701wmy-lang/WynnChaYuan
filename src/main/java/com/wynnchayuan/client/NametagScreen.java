@@ -4,7 +4,7 @@ import com.wynnchayuan.CollectorConfig;
 import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.render.Colors;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -219,7 +219,7 @@ public final class NametagScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         int x = left();
         int y = top();
 
@@ -229,10 +229,10 @@ public final class NametagScreen extends Screen {
         int panelTop = y - PANEL_PAD;
         int panelBottom = fieldY(2) + 20 + 8;
         Cards.panel(g, x - 10, panelTop, W + 20, panelBottom - panelTop);
-        super.render(g, mouseX, mouseY, delta);
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
-        g.drawCenteredString(this.font, this.title, this.width / 2, 22, Colors.TEXT);
-        g.drawCenteredString(this.font,
+        g.centeredText(this.font, this.title, this.width / 2, 22, Colors.TEXT);
+        g.centeredText(this.font,
                 Component.literal(aroundLines()[0])
                         .withStyle(ChatFormatting.GRAY),
                 this.width / 2, 36, Colors.SUBTLE);
@@ -248,13 +248,13 @@ public final class NametagScreen extends Screen {
             Cards.hint(g, this.font, x, fieldY(n) - LABEL_LIFT, labels[n + 1]);
         }
 
-        g.drawCenteredString(this.font,
+        g.centeredText(this.font,
                 Component.literal(aroundLines()[1])
                         .withStyle(ChatFormatting.DARK_GRAY),
                 this.width / 2, panelBottom + 16, Colors.FAINT);
 
         if (!status.getString().isEmpty()) {
-            g.drawCenteredString(this.font, status, this.width / 2, this.height - 46, Colors.TEXT);
+            g.centeredText(this.font, status, this.width / 2, this.height - 46, Colors.TEXT);
         }
     }
 
@@ -265,6 +265,6 @@ public final class NametagScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 }

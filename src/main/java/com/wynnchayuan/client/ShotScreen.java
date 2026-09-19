@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.wynnchayuan.WynnChaYuan;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -127,8 +127,8 @@ public final class ShotScreen extends Screen {
 
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
         int w = previewWidth();
         int h = previewHeight();
         int x = this.width - w - 12;
@@ -142,10 +142,10 @@ public final class ShotScreen extends Screen {
                 x, y, 0f, 0f, w, h, w, h);
 
         int mid = leftColumn();
-        graphics.drawCenteredString(this.font, this.title,
+        graphics.centeredText(this.font, this.title,
                 mid, this.height / 2 - 46, accent);
         if (!note.getString().isEmpty()) {
-            graphics.drawCenteredString(this.font, note,
+            graphics.centeredText(this.font, note,
                     mid, this.height / 2 + 34, 0xFFFFFF);
         }
     }
@@ -210,7 +210,7 @@ public final class ShotScreen extends Screen {
             this.minecraft.getTextureManager().release(preview);
             texture = null;
         }
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 
     @Override

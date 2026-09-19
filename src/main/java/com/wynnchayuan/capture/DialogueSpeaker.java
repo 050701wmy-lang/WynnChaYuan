@@ -59,7 +59,7 @@ public final class DialogueSpeaker {
 
     /**
      * 字型的判斷刻意跟 {@code DialogueProbe.fontOf} 用同一招：把字型描述轉成字串再找路徑。
-     * 1.21.11 的 {@code getFont()} 回傳的是 {@code FontDescription} 而不是 Identifier，
+     * 26.2 的 {@code getFont()} 回傳的是 {@code FontDescription} 而不是 Identifier，
      * 型別在版本之間動過，字串比對是這裡最不會被版本改動打斷的寫法。
      */
     private static boolean isNameplate(Style style) {

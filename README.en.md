@@ -6,7 +6,7 @@
 
 繁體中文：**[README.md](README.md)**
 
-A multi-language translation mod for Wynncraft (Fabric 1.21.11). **The original text is kept**; the
+A multi-language translation mod for Wynncraft (Fabric 26.2). **The original text is kept**; the
 translation is shown beside it, or written in its place.
 
 [Download](https://github.com/LyuChaCha/WynnChaYuan/releases/latest) ·
@@ -99,7 +99,7 @@ Switch under **F6 → Data**, without changing the game's language or restarting
 
 | Requirement | Version |
 |---|---|
-| Minecraft | 1.21.11 |
+| Minecraft | 26.2 |
 | Loader | Fabric |
 | Dependencies | [Wynntils](https://modrinth.com/mod/wynntils) 4.2+, [Fabric API](https://modrinth.com/mod/fabric-api) |
 
@@ -124,7 +124,7 @@ into them. **You do not have to translate anything**, just hand us the gaps you 
 2. Look through the file and delete anything personal (other players' names, guild names, private chat).
 3. **F6 → Data → How to submit** opens the [issue form](https://github.com/LyuChaCha/WynnChaYuan/issues/new?template=corpus.yml); drag the file in. Or send it to **LyuChaCha** on Discord.
 
-The mod **never sends anything by itself**. The export already leaves out player names and guild,
+The mod **never uploads collected corpus files automatically**. Optional AI fallback is disabled by default; when enabled in F6 → Data, normalized untranslated text and relevant context are sent to your configured OpenAI-compatible API. See [AI fallback setup and design](docs/AI_FALLBACK.md). The export already leaves out player names and guild,
 party, shout and private chat, but the filter is heuristic, so check it before you send it.
 
 For a wrong translation or term, open a [GitHub issue](https://github.com/LyuChaCha/WynnChaYuan/issues);

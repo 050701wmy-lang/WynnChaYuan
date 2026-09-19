@@ -141,7 +141,7 @@ public final class GlyphSplitter {
     /**
      * 這個字型是不是「真的自訂字型」。
      *
-     * <p>注意不能只寫 {@code font != null}。1.21.11 的一般文字帶的是
+     * <p>注意不能只寫 {@code font != null}。26.2 的一般文字帶的是
      * {@link FontDescription#DEFAULT}（非 null 的預設字型），寫成 null 判斷會把
      * <b>每一段普通文字都當成符號</b>，結果整段對話被過濾掉、一個字也收不到。
      *

@@ -6,7 +6,7 @@
 
 English: **[README.en.md](README.en.md)**
 
-Wynncraft 的多語言翻譯模組（Fabric 1.21.11）。**原文保留**，譯文顯示在旁邊，或直接寫進原本的位置。
+Wynncraft 的多語言翻譯模組（Fabric 26.2）。**原文保留**，譯文顯示在旁邊，或直接寫進原本的位置。
 
 [下載](https://github.com/LyuChaCha/WynnChaYuan/releases/latest) ·
 [更新日誌](CHANGELOG.md) ·
@@ -38,6 +38,7 @@ Wynncraft 的多語言翻譯模組（Fabric 1.21.11）。**原文保留**，譯�
 
 ### 其他
 
+- **AI 即時補翻（預設關閉）**：正式／本地語料查不到時，可用自行設定的 OpenAI-compatible API 非同步補翻。F6 →「資料」設定；[配置、設計與驗證說明](docs/AI_FALLBACK.md)。
 - **譯文自動更新**：譯文從 GitHub 下載，新的翻譯合併後下次進遊戲就生效，**不必更新模組**。離線時用上次的快取或 jar 內建版本
 - **市集搜尋**：在交易市集用你的語言搜尋，送出前自動換回英文原名；打字時列出候選，↑↓ 選、Tab 填入
 - **複製聊天**：列出最近的聊天訊息，點一則複製，方便回報（按鍵預設沒綁）
@@ -96,7 +97,7 @@ Wynncraft 的多語言翻譯模組（Fabric 1.21.11）。**原文保留**，譯�
 
 | 需求 | 版本 |
 |---|---|
-| Minecraft | 1.21.11 |
+| Minecraft | 26.2 |
 | 載入器 | Fabric |
 | 前置 | [Wynntils](https://modrinth.com/mod/wynntils) 4.2 以上、[Fabric API](https://modrinth.com/mod/fabric-api) |
 
@@ -119,7 +120,7 @@ Wynncraft 的多語言翻譯模組（Fabric 1.21.11）。**原文保留**，譯�
 2. 打開檔案看一遍，刪掉任何個人資訊（別人的名字、公會名、私人對話）。
 3. **F6 →「資料」→「如何提交」**打開 [Issue 表單](https://github.com/LyuChaCha/WynnChaYuan/issues/new?template=corpus.yml)，把檔案拖進去；或在 Discord 傳給 **LyuChaCha**。
 
-模組**不會自動送出任何東西**。匯出檔已經濾掉玩家名字與公會、隊伍、喊話、私訊，但濾網是猜的，送出前請自己看過。
+模組**不會自動上傳收集檔**。另行啟用 AI 補翻後，缺少正式譯文的標準化文字及必要上下文會送到你設定的 API。匯出檔已經濾掉玩家名字與公會、隊伍、喊話、私訊，但濾網是猜的，送出前請自己看過。
 
 翻錯或用詞不對，直接到 [GitHub Issues](https://github.com/LyuChaCha/WynnChaYuan/issues) 回報，附上英文原文最好——聊天訊息可以用「複製聊天」直接複製。
 

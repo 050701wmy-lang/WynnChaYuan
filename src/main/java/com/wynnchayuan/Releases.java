@@ -214,7 +214,11 @@ public final class Releases {
     private static void tell(net.minecraft.client.Minecraft client,
                              net.minecraft.network.chat.Component line, boolean overlay) {
         com.wynnchayuan.capture.OwnOutputs.note(line);
-        client.player.displayClientMessage(line, overlay);
+        if (overlay) {
+            client.player.sendOverlayMessage(line);
+        } else {
+            client.player.sendSystemMessage(line);
+        }
     }
 
     /** 這一場講過了沒。見 {@link #tellOnce}。 */

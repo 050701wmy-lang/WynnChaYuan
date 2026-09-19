@@ -114,7 +114,7 @@ public final class PanelShot {
         // 它壞掉頂多少一張圖，不該把整個遊戲擋在門外。
         String where = "?";
         try {
-            var key = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+            var key = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
                     .getBoundKeyOf(mapping);
             if (key != null) {
                 where = key.getName();
@@ -137,7 +137,7 @@ public final class PanelShot {
             return "未設定";
         }
         try {
-            var key = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+            var key = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
                     .getBoundKeyOf(bound);
             if (key == null || key.getValue() == com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue()) {
                 return "未設定";
@@ -168,7 +168,7 @@ public final class PanelShot {
             return null;
         }
         try {
-            var mine = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+            var mine = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
                     .getBoundKeyOf(bound);
             if (mine == null
                     || mine.getValue() == com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue()) {
@@ -182,7 +182,7 @@ public final class PanelShot {
                 if (other == bound) {
                     continue;
                 }
-                var theirs = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+                var theirs = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
                         .getBoundKeyOf(other);
                 if (theirs != null && theirs.getValue() == mine.getValue()) {
                     return net.minecraft.network.chat.Component
@@ -215,7 +215,7 @@ public final class PanelShot {
      * 每個 tick 呼叫一次。真正的拍照在這裡發生。
      *
      * <h2>為什麼是 tick，不是「繪製之後」</h2>
-     * Minecraft 1.21.5 之後 GUI 是<b>延後繪製</b>的：{@code GuiGraphics} 只把
+     * Minecraft 1.21.5 之後 GUI 是<b>延後繪製</b>的：{@code GuiGraphicsExtractor} 只把
      * 指令排進 {@code GuiRenderState}，要到一幀的最後 {@code GuiRenderer}
      * 才一次畫掉。所以在任何「繪製中」的掛鉤讀 framebuffer，讀到的都是
      * <b>只有世界、沒有 GUI</b> 的半成品——先前拍出來全是地板與木箱，
@@ -241,7 +241,7 @@ public final class PanelShot {
      * 按著的——不經過任何中間層，畫面開不開都一樣。
      *
      * <p>{@code KeyMapping.key} 是 protected，但 Fabric 的
-     * {@code KeyBindingHelper.getBoundKeyOf} 讀得到——所以改綁一樣有效，
+     * {@code KeyMappingHelper.getBoundKeyOf} 讀得到——所以改綁一樣有效，
      * 不必認死 F8。
      */
     /**
@@ -443,7 +443,7 @@ public final class PanelShot {
         boolean auto = WynnChaYuan.config().shotMode()
                 == com.wynnchayuan.CollectorConfig.ShotMode.AUTO;
 
-        Screenshot.takeScreenshot(mc.getMainRenderTarget(), full -> {
+        Screenshot.takeScreenshot(mc.gameRenderer.mainRenderTarget(), full -> {
             NativeImage cropped;
             try (NativeImage image = full) {
                 cropped = crop(image, px, py, pw, ph);
@@ -460,8 +460,8 @@ public final class PanelShot {
                     return;
                 }
                 try {
-                    mc.setScreen(new com.wynnchayuan.client.ShotScreen(
-                            cropped, name, mc.screen));
+                    mc.gui.setScreen(new com.wynnchayuan.client.ShotScreen(
+                            cropped, name, mc.gui.screen()));
                 } catch (Throwable t) {
                     // 面板開不起來時<b>還是要把圖留下</b>，而且要說原因。
                     // 先前這裡沒有退路：面板開失敗＝什麼都沒發生。
@@ -599,7 +599,7 @@ public final class PanelShot {
      * 說一聲。
      *
      * <p>一定要丟回<b>主執行緒</b>。抓畫面是非同步的，回呼跑在算繪執行緒上，
-     * 在那裡呼叫 {@code displayClientMessage} 不會顯示——使用者按了鍵、
+     * 在那裡呼叫 {@code sendSystemMessage} 不會顯示——使用者按了鍵、
      * 檔案也存好了，畫面上卻什麼都沒發生。第一版就是這樣。
      *
      * <p>順便發一個快門聲。Wynncraft 的聊天欄常常在刷，一行字很容易被沖掉，
@@ -625,7 +625,7 @@ public final class PanelShot {
     private static void toast(Minecraft mc, Component message) {
         try {
             net.minecraft.client.gui.components.toasts.SystemToast.addOrUpdate(
-                    mc.getToastManager(),
+                    mc.gui.toastManager(),
                     net.minecraft.client.gui.components.toasts.SystemToast
                             .SystemToastId.PERIODIC_NOTIFICATION,
                     Component.literal(WynnChaYuan.MOD_NAME),
@@ -645,7 +645,7 @@ public final class PanelShot {
                             .withStyle(ChatFormatting.DARK_GRAY))
                     .append(message);
             com.wynnchayuan.capture.OwnOutputs.note(line);
-            mc.player.displayClientMessage(line, false);
+            mc.player.sendSystemMessage(line);
             mc.player.playSound(
                     net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1f, 1f);
         }
