@@ -12,7 +12,7 @@
 
 ## English
 
-> **Beta.** The translations are mostly AI-generated and only partly proofread. Expect mistranslations and inconsistent terms.
+> **Beta.** Some translations are written by hand and then rendered by AI, a smaller part is translated by AI directly, and most of the core content has been proofread by a person. The other languages are AI-translated from the Traditional Chinese, so expect mistranslations and inconsistent terms.
 
 ### What it translates
 
@@ -48,18 +48,17 @@ Switch under F6 → Data, without changing the game's language.
 ### Progress
 
 <!-- 進度:開始 -->
-更新於 2026-09-19。
+更新於 2026-09-25 / Updated 2026-09-25
 
-| 語言 | 進度 | 已翻 / 總數 |
-|---|---|---:|
-| `es_es` Español | ██████████ 100.0% | 47,137 / 47,146 |
-| `ja_jp` 日本語 | ██████████ 100.0% | 47,137 / 47,146 |
-| `ru_ru` Русский | ██████████ 100.0% | 47,137 / 47,146 |
-| `zh_cn` 简体中文 | ██████████ 100.0% | 47,137 / 47,146 |
-| `ko_kr` 한국어 | ██████████ 100.0% | 47,136 / 47,146 |
-| `zh_tw` 繁體中文 | ██████████ 99.8% | 47,075 / 47,146 |
+**翻了哪些**：任務對話與任務書、物品（名稱、詞條、敘述、Major ID）、技能樹、介面（F6 設定、背包、交易市場、公會、地圖、追蹤欄）、NPC 與地區名稱、看板與聊天公告。
 
-各語言還缺哪些檔案 / Per-language breakdown: [PROGRESS.md](https://github.com/LyuChaCha/WynnChaYuan/blob/main/docs/PROGRESS.md)
+**大概翻到哪**：6 種語言目前都在 **95% 以上**，繁體中文最完整。剩下的多半是零星的名稱與半句話，而且遊戲還在更新——**一定還有漏的**。看到沒翻、翻錯或版面跑掉的，[開個 issue](https://github.com/LyuChaCha/WynnChaYuan/issues) 告訴我們就好。
+
+**What's covered**: quest dialogue and the quest book, items (names, stats, lore, Major IDs), the ability tree, the interface (F6, inventory, trade market, guild, map, tracker), NPC and place names, signs and chat announcements.
+
+**Roughly how far**: every language is past **95%**, Traditional Chinese being the most complete. What is left is mostly stray names and half-sentences, and the game keeps changing — **there will be gaps**. Found something untranslated, wrong, or laid out badly? [Open an issue](https://github.com/LyuChaCha/WynnChaYuan/issues).
+
+每一種語言還缺哪些檔案 / Per-language breakdown: [PROGRESS.md](https://github.com/LyuChaCha/WynnChaYuan/blob/main/docs/PROGRESS.md)
 <!-- 進度:結束 -->
 
 ### Install
@@ -94,7 +93,7 @@ Code: [GNU AGPLv3 or later](https://github.com/LyuChaCha/WynnChaYuan/blob/main/L
 
 ## 繁體中文
 
-> **目前是 Beta。** 譯文大多由 AI 產出，只有一部分經過人工校稿，會有錯譯與用詞不一致。
+> **目前是 Beta。** 部分譯文由人工輸入再經 AI 轉出，一小部分直接由 AI 翻譯，大部分基礎內容都經過人工校稿。其他語言目前基本上都是圍繞著繁體中文再做 AI 翻譯，可能會有錯譯與用詞不一致。
 
 ### 翻譯範圍
 
@@ -130,18 +129,17 @@ Code: [GNU AGPLv3 or later](https://github.com/LyuChaCha/WynnChaYuan/blob/main/L
 ### 翻譯進度
 
 <!-- 進度:開始 -->
-更新於 2026-09-19。
+更新於 2026-09-25 / Updated 2026-09-25
 
-| 語言 | 進度 | 已翻 / 總數 |
-|---|---|---:|
-| `es_es` Español | ██████████ 100.0% | 47,137 / 47,146 |
-| `ja_jp` 日本語 | ██████████ 100.0% | 47,137 / 47,146 |
-| `ru_ru` Русский | ██████████ 100.0% | 47,137 / 47,146 |
-| `zh_cn` 简体中文 | ██████████ 100.0% | 47,137 / 47,146 |
-| `ko_kr` 한국어 | ██████████ 100.0% | 47,136 / 47,146 |
-| `zh_tw` 繁體中文 | ██████████ 99.8% | 47,075 / 47,146 |
+**翻了哪些**：任務對話與任務書、物品（名稱、詞條、敘述、Major ID）、技能樹、介面（F6 設定、背包、交易市場、公會、地圖、追蹤欄）、NPC 與地區名稱、看板與聊天公告。
 
-各語言還缺哪些檔案 / Per-language breakdown: [PROGRESS.md](https://github.com/LyuChaCha/WynnChaYuan/blob/main/docs/PROGRESS.md)
+**大概翻到哪**：6 種語言目前都在 **95% 以上**，繁體中文最完整。剩下的多半是零星的名稱與半句話，而且遊戲還在更新——**一定還有漏的**。看到沒翻、翻錯或版面跑掉的，[開個 issue](https://github.com/LyuChaCha/WynnChaYuan/issues) 告訴我們就好。
+
+**What's covered**: quest dialogue and the quest book, items (names, stats, lore, Major IDs), the ability tree, the interface (F6, inventory, trade market, guild, map, tracker), NPC and place names, signs and chat announcements.
+
+**Roughly how far**: every language is past **95%**, Traditional Chinese being the most complete. What is left is mostly stray names and half-sentences, and the game keeps changing — **there will be gaps**. Found something untranslated, wrong, or laid out badly? [Open an issue](https://github.com/LyuChaCha/WynnChaYuan/issues).
+
+每一種語言還缺哪些檔案 / Per-language breakdown: [PROGRESS.md](https://github.com/LyuChaCha/WynnChaYuan/blob/main/docs/PROGRESS.md)
 <!-- 進度:結束 -->
 
 ### 安裝

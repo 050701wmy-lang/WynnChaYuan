@@ -204,6 +204,18 @@ public final class UpgradeSafetyTest {
         expected.addProperty("itemNames", "ON");
         // 0.2.2：「跟別人講話請用原文」的警語。升級上來的人還沒看過，所以是 false。
         expected.addProperty("noticeDismissed", false);
+        // 0.2.3：Wynntils 自己那幾個畫面要不要換成中文。舊設定檔沒有，補上預設值。
+        expected.addProperty("wynntilsUi", true);
+        // 0.2.3：按住 Shift 暫時看另一種物品名稱。舊設定檔沒有，補上預設值。
+        expected.addProperty("shiftPeekNames", true);
+        // 0.2.3：翻譯改成「先問有沒有新的」。上一次抓到哪一版、要不要自己抓。
+        expected.addProperty("syncedTranslations", "");
+        expected.addProperty("autoUpdateTranslations", false);
+        // 0.2.3_1：boss bar 自己的開關（issue #825）。舊設定檔沒有，補上預設值。
+        expected.addProperty("translateBossBar", true);
+        // 0.2.3_1：translateNametags 拿掉了。它沒有接到 F6 卻擋著算繪，正是 #825
+        // 的病根；浮空字改成跟「名牌與漂浮字」那一列走。
+        expected.remove("translateNametags");
         JsonObject rewritten = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
         check("重寫後少了 shareCaptures、多了兩欄補寫的，其他每一欄都一樣",
                 expected.equals(rewritten));

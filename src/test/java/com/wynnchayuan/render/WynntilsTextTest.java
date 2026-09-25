@@ -43,6 +43,7 @@ public final class WynntilsTextTest {
         heldItem(config, store);
         bossBar(config, store);
         entityName(config, store);
+        wynntilsScreens(config, store);
 
         System.out.println(failures == 0 ? "\n就地取代：全部通過"
                 : "\n就地取代：" + failures + " 項失敗");
@@ -188,9 +189,25 @@ public final class WynntilsTextTest {
               shown.startsWith("馬") && shown.endsWith("47❤"));
         check("同一條再畫一次拿到同一份", WynntilsText.bossBar(bar, config, store)
                 == WynntilsText.bossBar(bar, config, store));
-        config.toggleNametags();
-        check("名牌翻譯關掉時 boss bar 原樣回去", WynntilsText.bossBar(bar, config, store) == bar);
-        config.toggleNametags();
+        // 兩者各自獨立：把名牌關掉不該連坐 boss bar。先前它們共用一個沒有 UI 的
+        // 舊欄位，現在 F6 上是兩顆開關，連坐會讓人以為壞了。
+        while (config.nametagMode() != CollectorConfig.NametagMode.OFF) {
+            config.cycleNametagMode();
+        }
+        check("名牌關掉不會連坐 boss bar",
+                WynntilsText.bossBar(bar, config, store).getString().startsWith("馬"));
+        while (config.nametagMode() == CollectorConfig.NametagMode.OFF) {
+            config.cycleNametagMode();
+        }
+
+        // issue #825：關不掉。先前唯一的開關是 translateNametags，而那個欄位
+        // 沒有接到 F6（只有測試在切它），所以實機上永遠是開的。
+        config.toggleBossBar();
+        check("boss bar 自己的開關關掉時原樣回去",
+                WynntilsText.bossBar(bar, config, store) == bar);
+        config.toggleBossBar();
+        check("再打開就照常翻",
+                WynntilsText.bossBar(bar, config, store).getString().startsWith("馬"));
     }
 
     /** 盔甲座疊出來的浮空字：討伐戰祭壇上方那種。 */
@@ -205,9 +222,65 @@ public final class WynntilsTextTest {
         net.minecraft.network.chat.Component odd =
                 net.minecraft.network.chat.Component.literal("Qwertyuiop Zxcv");
         check("翻不出來的原樣回去", WynntilsText.entityName(odd, config, store) == odd);
-        config.toggleNametags();
-        check("名牌翻譯關掉時原樣回去", WynntilsText.entityName(altar, config, store) == altar);
-        config.toggleNametags();
+        // 跟著 F6 的「名牌與漂浮字」走（#825 之前它掛在一個沒有 UI 的欄位上）
+        CollectorConfig.NametagMode was = config.nametagMode();
+        while (config.nametagMode() != CollectorConfig.NametagMode.OFF) {
+            config.cycleNametagMode();
+        }
+        check("名牌那一列關掉時原樣回去",
+                WynntilsText.entityName(altar, config, store) == altar);
+        // 「注視時顯示」對盔甲座做不到小框（那要 TextDisplay 才認得出位置），
+        // 所以那一段一樣就地換——不然等於完全不翻，見 WynntilsText#entityName。
+        config.cycleNametagMode();
+        check("注視時顯示也照翻（小框對盔甲座做不到）",
+                WynntilsText.entityName(altar, config, store).getString().equals("腐敗祭壇"));
+        while (config.nametagMode() != was) {
+            config.cycleNametagMode();
+        }
+    }
+
+    /**
+     * Wynntils 自己那幾個畫面上的字（綜合頁面左邊那一列、分頁標題⋯⋯）。
+     *
+     * <h2>為什麼這一條值得釘</h2>
+     * 那些字有一半是 Wynncraft 送來的內容（任務名、洞穴名、
+     * 「Currently in progress」），Wynntils 的語言檔永遠不會有它們，
+     * 但我們的語料裡早就有。打在它的 {@code FontRenderer} 入口就換得到。
+     *
+     * <p>真正的風險是<b>換太多</b>：這個入口所有字都會經過，
+     * 所以「查不到就原樣回去」與「關掉就完全不動」兩邊都要測。
+     */
+    private static void wynntilsScreens(CollectorConfig config, TranslationStore store) {
+        StyledText inProgress = StyledText.fromString("Currently in progress");
+        StyledText shown = WynntilsText.screenText(inProgress, config, store);
+        check("綜合頁面的狀態翻得出來（實際 " + shown.getString() + "）",
+              "進行中".equals(shown.getString()));
+
+        StyledText already = StyledText.fromString("進行中");
+        check("已經是中文的原樣回去",
+              WynntilsText.screenText(already, config, store) == already);
+
+        StyledText odd = StyledText.fromString("Qwertyuiop Zxcv");
+        check("查不到的原樣回去", WynntilsText.screenText(odd, config, store) == odd);
+
+        config.toggleWynntilsUi();
+        check("F6 關掉時完全不動",
+              WynntilsText.screenText(inProgress, config, store) == inProgress);
+        config.toggleWynntilsUi();
+        check("再打開就又換得到",
+              "進行中".equals(WynntilsText.screenText(inProgress, config, store).getString()));
+
+        // 不該翻的那兩處：公會戰地圖的領地標籤（TerritoryPoi），以及物品格角落
+        // Wynntils 自己算的簡稱（ItemTextOverlayFeature）。從它們進去到出來一律不翻。
+        //
+        // 實機各踩過一次：那一格的公會叫 Fox，被 npc.json 的「Fox: 狐狸」換掉；
+        // 傳送卷軸的簡稱被 ability/mage.json 的「Teleport: 傳送」換掉。
+        WynntilsText.holdRawText(true);
+        check("★ 那一段裡的字原樣回去（公會名與簡稱都不是遊戲文案，撞名躲不完）",
+              WynntilsText.screenText(inProgress, config, store) == inProgress);
+        WynntilsText.holdRawText(false);
+        check("★ 出了那一段就恢復",
+              "進行中".equals(WynntilsText.screenText(inProgress, config, store).getString()));
     }
 
     private static void check(String what, boolean ok) {

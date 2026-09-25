@@ -12,7 +12,13 @@
     "HeldItemOverlayMixin",
     "BossBarNameMixin",
     "EntityNameMixin",
-    "NotificationMixin"
+    "NotificationMixin",
+    "WynntilsFontMixin",
+    "ItemTextOverlayMixin",
+    "TerritoryPoiMixin",
+    "WynntilsMenuTooltipMixin",
+    "WynntilsBookTooltipMixin",
+    "WynntilsSearchMixin"
   ],
   "injectors": {
     "defaultRequire": 0

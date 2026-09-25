@@ -137,12 +137,46 @@ public final class CollectorConfig {
     private boolean chatCopy = true;
 
     /**
+     * Wynntils 自己畫的那些介面要不要換成中文。
+     *
+     * <h2>換的是哪些字</h2>
+     * 綜合頁面（任務／洞穴／發現點的清單與右邊那張卡）、地圖、疊層管理⋯⋯
+     * 這些畫面的字有兩種來源，兩種都在這一條底下：
+     *
+     * <ul>
+     *   <li>Wynntils 自己的介面字串。它本來就有 zh_tw／zh_cn 語言檔，但只翻了
+     *       四千多條裡的兩千多條，剩下的照樣是英文。</li>
+     *   <li><b>Wynncraft 送來的內容</b>——任務名、洞穴名、「Currently in progress」、
+     *       「Click To Track」那些。Wynntils 只是把伺服器給的字重畫一次，
+     *       所以它的語言檔永遠不會有；這些字<b>早就在我們的語料裡</b>了。</li>
+     * </ul>
+     *
+     * <p>預設<b>開啟</b>：畫面上一半中文一半英文比全英文更難讀。
+     * 不想動別人介面的人可以關掉，關掉之後那幾個 mixin 就原樣回傳。
+     */
+    private boolean wynntilsUi = true;
+
+    /**
      * 市集搜尋打中文自動換成英文。
      *
      * <p>預設<b>開啟</b>：用就地取代的人看到的是中文，照著打卻搜不到東西——
      * 那是翻譯造成的問題，預設就該補起來。不想要的人可以關掉。
      */
     private boolean marketSearch = true;
+
+    /**
+     * 按住 Shift 暫時換成另一種：看譯名的人看到原文，看原文的人看到譯名。
+     *
+     * <h2>為什麼不是再開一個模式</h2>
+     * 「譯名加原文」那一種等於永遠占掉兩倍寬度，而需要原文的時機其實很零星
+     * ——去 wiki 查、去交易市場貼名字。為了那幾次讓每一件裝備都變長不划算。
+     *
+     * <p>Wynntils 自己也是這個做法：平常畫一種，按住 Shift 看另一種。
+     * 所以這裡跟著同一個手感，玩家不必記兩套。
+     *
+     * <p>「譯名加原文」那一種本來就兩個都給了，按 Shift 不做事。
+     */
+    private boolean shiftPeekNames = true;
 
     /**
      * 譯文截圖：什麼時候拍。
@@ -193,6 +227,25 @@ public final class CollectorConfig {
     private String notifiedVersion = "";
 
     /**
+     * 上一次把譯文抓下來時，譯文停在哪一個 commit。
+     *
+     * <p>空的代表「從來沒抓過」——那一次照抓不誤，新玩家不必先被問一次才有翻譯。
+     * 之後就拿它跟 {@link com.wynnchayuan.translate.RemoteSync#remoteVersion()}
+     * 比，一樣就什麼都不做。
+     */
+    private String syncedTranslations = "";
+
+    /**
+     * 進遊戲就自己把新譯文抓下來，不問。
+     *
+     * <h2>為什麼預設是關的</h2>
+     * 抓一次是三十幾個檔。想要最新翻譯的人打開它，其他人只會在<b>真的有新東西</b>
+     * 的時候在聊天室看到一行提示，要不要更新自己決定。在遊戲裡對照兩種語言的人
+     * 尤其需要這個：切語言不該每次都重抓一遍。
+     */
+    private boolean autoUpdateTranslations = false;
+
+    /**
      * 是否寫出診斷檔。
      *
      * <p><b>預設關閉。</b>那些檔案是拿來回報問題用的——對排查很有用，
@@ -230,7 +283,15 @@ public final class CollectorConfig {
      * <p>名牌是唯一就地替換原文的地方（浮在 3D 世界裡，沒辦法開側欄），
      * 所以獨立一個開關，不想動原文的人可以只關這項。
      */
-    private boolean translateNametags = true;
+    /**
+     * 畫面頂端 boss bar 的標題要不要翻。
+     *
+     * <p>先前它跟浮空字共用一個叫 {@code translateNametags} 的欄位，而那個欄位
+     * <b>沒有接到 F6</b>——只有測試在切它——所以實機上永遠是開的，關不掉
+     *（issue #825）。打怪時那一條橫在畫面正中間，不想要的人沒有任何辦法。
+     * 那個欄位已經拿掉：浮空字歸「名牌與漂浮字」管，boss bar 歸這一個。
+     */
+    private boolean translateBossBar = true;
 
     /**
      * 名牌翻譯的呈現方式。
@@ -444,6 +505,16 @@ public final class CollectorConfig {
         return translateHeldItem;
     }
 
+    public boolean wynntilsUi() {
+        return wynntilsUi;
+    }
+
+    public boolean toggleWynntilsUi() {
+        wynntilsUi = !wynntilsUi;
+        save();
+        return wynntilsUi;
+    }
+
     public boolean marketSearch() {
         return marketSearch;
     }
@@ -452,6 +523,17 @@ public final class CollectorConfig {
         marketSearch = !marketSearch;
         save();
         return marketSearch;
+    }
+
+    /** 見 {@link #shiftPeekNames}：按住 Shift 要不要暫時換另一種。 */
+    public boolean shiftPeekNames() {
+        return shiftPeekNames;
+    }
+
+    public boolean toggleShiftPeekNames() {
+        shiftPeekNames = !shiftPeekNames;
+        save();
+        return shiftPeekNames;
     }
 
     public boolean chatCopy() {
@@ -551,12 +633,34 @@ public final class CollectorConfig {
         save();
     }
 
+    /** 見 {@link #syncedTranslations}。 */
+    public String syncedTranslations() {
+        return syncedTranslations;
+    }
+
+    public void syncedTranslations(String version) {
+        syncedTranslations = version == null ? "" : version;
+        save();
+    }
+
+    /** 見 {@link #autoUpdateTranslations}。 */
+    public boolean autoUpdateTranslations() {
+        return autoUpdateTranslations;
+    }
+
+    public boolean toggleAutoUpdateTranslations() {
+        autoUpdateTranslations = !autoUpdateTranslations;
+        save();
+        return autoUpdateTranslations;
+    }
+
     public boolean debugDumps() {
         return debugDumps;
     }
 
-    public boolean translateNametags() {
-        return translateNametags;
+    /** 見 {@link #translateBossBar}。 */
+    public boolean translateBossBar() {
+        return translateBossBar;
     }
 
     public ItemNames itemNames() {
@@ -937,10 +1041,10 @@ public final class CollectorConfig {
 
     private boolean dirty = false;
 
-    public boolean toggleNametags() {
-        translateNametags = !translateNametags;
+    public boolean toggleBossBar() {
+        translateBossBar = !translateBossBar;
         save();
-        return translateNametags;
+        return translateBossBar;
     }
 
     public NametagMode nametagMode() {
@@ -1067,6 +1171,7 @@ public final class CollectorConfig {
             choiceMode = dialogue;
         }
         chatCopy = bool(o, "chatCopy", chatCopy);
+        wynntilsUi = bool(o, "wynntilsUi", wynntilsUi);
         translateTitles = bool(o, "translateTitles", translateTitles);
         // 0.1.9_10 的 showScoreboard 是「右上那一欄要不要進面板」，0.2.0 換成
         // 三段模式。舊設定檔關掉的人維持關掉，其餘照新的預設（就地取代）。
@@ -1079,6 +1184,7 @@ public final class CollectorConfig {
         translateObjectives = bool(o, "translateObjectives", translateObjectives);
         translateHeldItem = bool(o, "translateHeldItem", translateHeldItem);
         marketSearch = bool(o, "marketSearch", marketSearch);
+        shiftPeekNames = bool(o, "shiftPeekNames", shiftPeekNames);
         chatMode = enumOr(o, "chatMode", ChatMode.class, chatMode);
         Boolean overlays = boolOrNull(o, "showOverlays");
         if (overlays != null) {
@@ -1088,13 +1194,16 @@ public final class CollectorConfig {
         }
         collect = bool(o, "collect", collect);
         notifiedVersion = str(o, "notifiedVersion", notifiedVersion);
+        syncedTranslations = str(o, "syncedTranslations", syncedTranslations);
+        autoUpdateTranslations =
+                bool(o, "autoUpdateTranslations", autoUpdateTranslations);
         language = str(o, "language", language).trim();
         fallbackLanguage = str(o, "fallbackLanguage", fallbackLanguage).trim();
         uiLanguage = str(o, "uiLanguage", uiLanguage).trim();
         debugDumps = bool(o, "debugDumps", debugDumps);
         collectGuiText = bool(o, "collectGuiText", collectGuiText);
         source = enumOr(o, "source", Source.class, source);
-        translateNametags = bool(o, "translateNametags", translateNametags);
+        translateBossBar = bool(o, "translateBossBar", translateBossBar);
         nametagMode = enumOr(o, "nametagMode", NametagMode.class, nametagMode);
         panelSide = enumOr(o, "panelSide", PanelSide.class, panelSide);
         noticeDismissed = bool(o, "noticeDismissed", noticeDismissed);
@@ -1263,6 +1372,8 @@ public final class CollectorConfig {
             o.addProperty("showOverlays", showOverlays);
             o.addProperty("collect", collect);
             o.addProperty("notifiedVersion", notifiedVersion);
+            o.addProperty("syncedTranslations", syncedTranslations);
+            o.addProperty("autoUpdateTranslations", autoUpdateTranslations);
             o.addProperty("language", language);
             o.addProperty("fallbackLanguage", fallbackLanguage);
             // uiLanguage 與 marketSearch 先前<b>只活在記憶體裡</b>：setUiLanguage 與
@@ -1273,7 +1384,7 @@ public final class CollectorConfig {
             o.addProperty("source", source.name());
             o.addProperty("debugDumps", debugDumps);
             o.addProperty("collectGuiText", collectGuiText);
-            o.addProperty("translateNametags", translateNametags);
+            o.addProperty("translateBossBar", translateBossBar);
             o.addProperty("nametagMode", nametagMode.name());
             o.addProperty("panelSide", panelSide.name());
             o.addProperty("itemNames", itemNames.name());
@@ -1289,7 +1400,9 @@ public final class CollectorConfig {
             o.addProperty("translateObjectives", translateObjectives);
             o.addProperty("translateHeldItem", translateHeldItem);
             o.addProperty("chatCopy", chatCopy);
+            o.addProperty("wynntilsUi", wynntilsUi);
             o.addProperty("marketSearch", marketSearch);
+            o.addProperty("shiftPeekNames", shiftPeekNames);
             o.addProperty("shotMode", shotMode.name());
             o.addProperty("nametagHoldMs", nametagHoldMs);
             o.addProperty("panelAnchor", panelAnchor.name());

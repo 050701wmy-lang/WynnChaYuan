@@ -186,7 +186,7 @@ public final class BlockLayout {
             result[start] = true;
             return;
         }
-        if (isCentredBlock(lead, content, start, end)) {
+        if (isCentredBlock(lead, content, start, end, blockWidth)) {
             java.util.Arrays.fill(result, start, end, true);
             return;
         }
@@ -194,7 +194,7 @@ public final class BlockLayout {
         int bestLen = 0;
         for (int from = start; from + MIN_RUN <= end; from++) {
             for (int to = end; to - from > bestLen && to - from >= MIN_RUN; to--) {
-                if (isCentredBlock(lead, content, from, to)) {
+                if (isCentredBlock(lead, content, from, to, blockWidth)) {
                     bestFrom = from;
                     bestLen = to - from;
                     break;              // 由長到短試，第一個吻合的就是這個起點最長的
@@ -234,7 +234,8 @@ public final class BlockLayout {
      * <p>只有一行、或每行都一樣寬時，「置中」與「靠左」畫出來沒有差別，
      * 一律當靠左——不動它最安全。
      */
-    private static boolean isCentredBlock(int[] lead, int[] content, int start, int end) {
+    private static boolean isCentredBlock(int[] lead, int[] content, int start, int end,
+                                          int blockWidth) {
         if (end - start < 2) {
             return false;
         }
@@ -310,10 +311,67 @@ public final class BlockLayout {
                 }
             }
         }
+        // 縮排<b>一模一樣</b>、內容卻不一樣寬的兩行，不可能是置中的。
+        //
+        // 置中的行，縮排是<b>算出來</b>的：內容差 d 像素，縮排就差 d/2。
+        // 兩行縮排完全相同，只可能是因為它們一樣寬。靠左的清單反過來——
+        // 縮排是版面給的固定值，內容多長都不影響它。
+        //
+        // <h2>實機回報</h2>
+        // 釣魚迷你任務那張卡（診斷檔「27 · Gather Koi I [Mini-Quest]」）：
+        //
+        // <pre>
+        //   [3] 縮排  0  內容 101  ✖ Fishing Lv. Min: 61
+        //   [4] 縮排 14  內容  80  {#}Distance: Medium
+        //   [5] 縮排 14  內容  68  {#}Length: Short
+        //   [6] 縮排 14  內容  75  {#}Difficulty: Easy
+        //   整份最寬 122
+        // </pre>
+        //
+        // span 是 101／108／96／103，差 12 像素，容差是 16——每一道檢查都過了，
+        // 四行全被判成置中，於是「距離／長度／難度」各自照自己的寬度重新置中，
+        // 畫面上飄到卡片正中間。
+        //
+        // 同樣形狀的卡片只要 Distance 那行多了「(824 Blocks)」，span 就差到
+        // 78 像素，容差擋得住——所以這個誤判只在<b>窄的卡片</b>上發生，
+        // 玩家回報的是「少部分頁面歪掉」。
+        //
+        // 這一條不受量測誤差影響：比的是排版偏移字元解出來的<b>整數</b>，
+        // 兩邊都來自同一串 {@code {#}}，不經過字型。
+        for (int i = start; i < end; i++) {
+            for (int j = i + 1; j < end; j++) {
+                if (lead[i] == lead[j] && Math.abs(content[i] - content[j]) > TOLERANCE) {
+                    return false;
+                }
+            }
+        }
         // 像素上的容差用<b>比例</b>而不是固定值：量測誤差會隨字型與行長放大，
         // 固定幾像素在長行上太嚴，在短行上又太鬆。
         int allowed = Math.max(TOLERANCE * 2, maxSpan * SPAN_TOLERANCE_PERCENT / 100);
-        return maxSpan - minSpan <= allowed;
+        if (maxSpan - minSpan > allowed) {
+            return false;
+        }
+        // span 就是這一段<b>自以為</b>的容器有多寬。它比整塊<b>窄</b>的話，
+        // 這一段不可能是置中的——沒有人會在 158px 的 tooltip 裡，
+        // 對著一個 72px 的假想容器置中。
+        //
+        // <h2>迷你任務的獎勵欄</h2>
+        // 只有一項獎勵的迷你任務，獎勵那一段就只有兩行：
+        //
+        // <pre>
+        //   縮排 14  內容 44   Rewards:
+        //   縮排  4  內容 62   - +32400 XP
+        // </pre>
+        //
+        // span 是 72 與 70，差 2 像素——「吻合得不能再吻合」。但那是
+        // <b>巧合</b>：整塊有 158px 寬，這兩行只是靠左的清單，縮排差 10px
+        // 純粹因為項目符號比標題往左凸一格。先前這一段被判成置中，
+        // 中文變短之後縮排跟著加大，獎勵那兩行就整個往右飄。
+        //
+        // 反過來 span <b>大於</b>整塊是正常的：聊天的歡迎訊息是相對
+        // <b>聊天視窗</b>置中的（span 309、最長的一行只有 252），
+        // 那種一律放行。
+        return maxSpan >= blockWidth - allowed;
     }
 
     /**

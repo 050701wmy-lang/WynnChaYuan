@@ -209,72 +209,104 @@ public final class TooltipPanel {
                 i = 2;
             }
         }
-        while (i < n) {
-            int longest = Math.min(store.maxBlockLines(), n - i);
-            List<Component> block = null;
-            int used = 0;
-            for (int len = longest; len >= 2 && block == null; len--) {
-                boolean[] slice = new boolean[len];
-                System.arraycopy(centered, i, slice, 0, len);
-                block = LineTranslator.translateBlock(
-                        styled.subList(i, i + len), store, slice);
-                used = len;
-            }
-            if (block != null) {
-                spans.add(new int[] {i, i + used, out.size(), out.size() + block.size()});
-                out.addAll(block);
-                anyTranslated = true;
-                for (int k = i; k < i + used; k++) {
-                    hit[k] = true;
+        // 物品名稱最多佔前兩行（第 0 行寬度是 0，看得見的在第 1 行）。
+        // 第三行起是敘述，裡面提到的同名裝備不附原文。見
+        // TranslationStore#holdAppendedOriginal。
+        try {
+            while (i < n) {
+                TranslationStore.holdAppendedOriginal(i >= 2);
+                int longest = Math.min(store.maxBlockLines(), n - i);
+                List<Component> block = null;
+                int used = 0;
+                for (int len = longest; len >= 2 && block == null; len--) {
+                    boolean[] slice = new boolean[len];
+                    System.arraycopy(centered, i, slice, 0, len);
+                    block = LineTranslator.translateBlock(
+                            styled.subList(i, i + len), store, slice);
+                    used = len;
                 }
-                i += used;
-                continue;
-            }
-            // 從最長試到兩行都沒中，才記一筆。記在這裡而不是 translateBlock 裡面，
-            // 是因為那邊每試一個長度就會記一次——一份八行的素材清單灌十九筆進去，
-            // 真正想查的那一段就永遠排不進診斷檔。
-            //
-            // 光是移到這裡還不夠。素材清單的每一行都查不到，而每一行都是一個新的
-            // 起點——同一份清單以「整段往後挪一行」的方式被記了十幾次，
-            // 二十個名額全被它吃光，使用者真正要查的那一段照樣看不到。
-            //
-            // 會被自動斷行的段落一定<b>接在空行後面，或從第一行開始</b>，
-            // 所以起點落在段落中間的那些窗格本來就不是要查的東西，不必記。
-            // 一樣要剝色碼：帶顏色的空行 getString 是「§7」，不算 blank。
-            boolean paragraphStart =
-                    i == 0 || styled.get(i - 1).getStringWithoutFormatting().isBlank();
-            if (longest >= 2 && paragraphStart) {
-                StringBuilder key = new StringBuilder();
-                for (int k = i; k < i + longest; k++) {
-                    if (k > i) {
-                        key.append(System.lineSeparator());
+                if (block != null) {
+                    spans.add(new int[] {i, i + used, out.size(), out.size() + block.size()});
+                    out.addAll(block);
+                    anyTranslated = true;
+                    for (int k = i; k < i + used; k++) {
+                        hit[k] = true;
                     }
-                    key.append(com.wynnchayuan.capture.LineParts.of(styled.get(k)).template());
+                    i += used;
+                    continue;
                 }
-                LineTranslator.noteBlockMiss(key.toString(), store);
+                // 從最長試到兩行都沒中，才記一筆。記在這裡而不是 translateBlock 裡面，
+                // 是因為那邊每試一個長度就會記一次——一份八行的素材清單灌十九筆進去，
+                // 真正想查的那一段就永遠排不進診斷檔。
+                //
+                // 光是移到這裡還不夠。素材清單的每一行都查不到，而每一行都是一個新的
+                // 起點——同一份清單以「整段往後挪一行」的方式被記了十幾次，
+                // 二十個名額全被它吃光，使用者真正要查的那一段照樣看不到。
+                //
+                // 會被自動斷行的段落一定<b>接在空行後面，或從第一行開始</b>，
+                // 所以起點落在段落中間的那些窗格本來就不是要查的東西，不必記。
+                // 一樣要剝色碼：帶顏色的空行 getString 是「§7」，不算 blank。
+                boolean paragraphStart =
+                        i == 0 || styled.get(i - 1).getStringWithoutFormatting().isBlank();
+                if (longest >= 2 && paragraphStart) {
+                    StringBuilder key = new StringBuilder();
+                    for (int k = i; k < i + longest; k++) {
+                        if (k > i) {
+                            key.append(System.lineSeparator());
+                        }
+                        key.append(com.wynnchayuan.capture.LineParts.of(styled.get(k)).template());
+                    }
+                    LineTranslator.noteBlockMiss(key.toString(), store);
+                }
+                // cards.json 另外記一份，但記的是<b>那一段</b>，不是上面那個窗格。
+                //
+                // majorid-debug.txt 記的是散文、而且有名額上限（實機常被登入時的
+                // 聊天洗光）；cards.json 沒有上限、只去重，而且寫成可以直接併進
+                // 語料的形狀。
+                //
+                // 為什麼不共用上面的 key：那個窗格長達 maxBlockLines（實測 15）行，
+                // 一張 19 行的迷你任務卡會把底下 Wynntils 自己加的中文提示一起吃
+                // 進來——含中文的鍵會被隱私那一關整段擋掉，擋掉的正是卡片敘述本身。
+                // 見 CardDump#paragraphKey。
+                //
+                // 不受上面 longest >= 2 拘束：那個條件是窗格邏輯的，跟段落無關。
+                //
+                // 算繪路徑上的東西，出事就當沒發生。
+                if (paragraphStart) {
+                    try {
+                        String para = com.wynnchayuan.capture.CardDump.paragraphKey(styled, i);
+                        if (para != null) {
+                            com.wynnchayuan.capture.CardDump.note(tooltip, styled, para, store);
+                        }
+                    } catch (Throwable ignored) {
+                        // 收集絕不能反過來弄壞畫面
+                    }
+                }
+                // 撞名的裝備名不是只會出現在名稱那一行。套裝的成員清單、寶箱裡的
+                // 獎勵預覽、鑄造材料，都是「項目符號 + 裝備名」單獨佔一行——那些行
+                // 一樣會被同名的技能／Major ID 譯文頂掉。實測 33 個裝備名撞名，
+                // 其中 23 個不管裸的還是帶項目符號都會被換掉。
+                //
+                // 只在<b>不是</b>技能樹／使命面板時擋。技能樹的「解鎖後將封鎖:」
+                // 底下列的正是技能名，那些該翻——而它們剛好也有同名裝備，
+                // 所以分辨面板這一步不能省。見 #isAbilityNode。
+                Component translated =
+                        !abilityPanel && blockedGearName(styled.get(i), store)
+                        ? null
+                        : LineTranslator.translate(styled.get(i), store, centered[i],
+                                                   leftAligned);
+                spans.add(new int[] {i, i + 1, out.size(), out.size() + 1});
+                if (translated != null) {
+                    anyTranslated = true;
+                    hit[i] = true;
+                    out.add(translated);
+                } else {
+                    out.add(LineTranslator.untranslated(styled.get(i)));
+                }
+                i++;
             }
-            // 撞名的裝備名不是只會出現在名稱那一行。套裝的成員清單、寶箱裡的
-            // 獎勵預覽、鑄造材料，都是「項目符號 + 裝備名」單獨佔一行——那些行
-            // 一樣會被同名的技能／Major ID 譯文頂掉。實測 33 個裝備名撞名，
-            // 其中 23 個不管裸的還是帶項目符號都會被換掉。
-            //
-            // 只在<b>不是</b>技能樹／使命面板時擋。技能樹的「解鎖後將封鎖:」
-            // 底下列的正是技能名，那些該翻——而它們剛好也有同名裝備，
-            // 所以分辨面板這一步不能省。見 #isAbilityNode。
-            Component translated =
-                    !abilityPanel && blockedGearName(styled.get(i), store)
-                    ? null
-                    : LineTranslator.translate(styled.get(i), store, centered[i],
-                                               leftAligned);
-            spans.add(new int[] {i, i + 1, out.size(), out.size() + 1});
-            if (translated != null) {
-                anyTranslated = true;
-                hit[i] = true;
-                out.add(translated);
-            } else {
-                out.add(LineTranslator.untranslated(styled.get(i)));
-            }
-            i++;
+        } finally {
+            TranslationStore.holdAppendedOriginal(false);
         }
         // 同一段不能一半中文一半英文，見 evenOut。
         //
@@ -318,8 +350,14 @@ public final class TooltipPanel {
         // 照新寬度重新置中。放得下的語言（中文、日文）原封不動。見 TooltipWiden。
         //
         // 放在拉正<b>之後</b>：量的是最後真正要畫的那一份。
+        // 先拆名稱再撐寬：撐寬是照最寬那一行算的，而沒拆開的「譯名 (原文)」
+        // 就是最寬的那一行——先撐開再拆，右邊就空出一大塊。見 NameWrap。
+        com.wynnchayuan.translate.NameWrap.Split split =
+                com.wynnchayuan.translate.NameWrap.split(
+                        tooltip, out, centered, store, TooltipPanel::measure);
         return com.wynnchayuan.translate.TooltipWiden.fit(
-                tooltip, out, centered, leftAligned, TooltipPanel::measure);
+                split.original(), split.translated(), split.centered(),
+                leftAligned, TooltipPanel::measure);
     }
 
     /** 量一行畫出來多寬；沒有字型（headless）時是 0，撐寬那一步就什麼都不做。 */
@@ -396,7 +434,7 @@ public final class TooltipPanel {
                     // 網址本來就不翻，不能拿它來判定「這段只翻了一半」。
                     // 「You can get individual boosts at / wynncraft.com/store」
                     // 就是因為第二行永遠是英文，第一行也跟著被收回英文。
-                    if (isAddress(plain.get(k))) {
+                    if (isAddress(plain.get(k)) || nothingToTranslate(plain.get(k))) {
                         continue;
                     }
                     some |= hit[k];
@@ -421,6 +459,40 @@ public final class TooltipPanel {
 
     private static final java.util.regex.Pattern ADDRESS = java.util.regex.Pattern.compile(
             "(?:https?://)?[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+(?:/\\S*)?");
+
+    /**
+     * 這一行<b>根本沒有字</b>可以翻——整行只剩數字與符號。
+     *
+     * <h2>為什麼要放它一馬</h2>
+     * 洞窟卡與迷你任務的敘述最後一行常常只有座標：
+     *
+     * <pre>
+     *   A deep cave full of scorched
+     *   creatures and earth lies at
+     *   [1603, 155, -5069]
+     * </pre>
+     *
+     * 前兩行的譯文語料裡<b>都有</b>，第三行卻永遠不可能有——
+     * {@link com.wynnchayuan.translate.LineTranslator} 自己就先擋了：模板
+     * （{@code [{~}, {~}, -{~}]}）一個字母都沒有，查表那一步直接回 null。
+     * 於是這一段被算成「翻了一半」，整段退回英文——畫面上整張洞窟卡的敘述
+     * 是英文，可是語料明明查得到。使用者回報的就是這個。
+     *
+     * <p>沒有東西要翻的行，本來就不該在「這一段翻完了沒」裡投票。跟網址那一條
+     * 是同一個道理（見 {@link #evenOut}）。
+     *
+     * <h2>條件要窄</h2>
+     * 只認<b>整行</b>沒有字母的。座標<b>夾在句子裡</b>的那種
+     * （{@code Highlands at [-1288, 86, -1319].}）有實字，照樣要算一票——
+     * 那種行是真的沒翻到，放過去就會夾出半中半英。
+     *
+     * <p>看的是畫面上的字而不是模板：模板裡的 {@code {p}} 帶著一個 p，
+     * 拿模板判會把「整行只有一個地名」誤當成沒字可翻。
+     */
+    static boolean nothingToTranslate(String line) {
+        return line != null
+                && !com.wynnchayuan.capture.GlyphSplitter.hasLetter(line);
+    }
 
     /**
      * 畫面上看得到的字。{@code minecraft:invisible} 字型底下的東西不算。
@@ -459,7 +531,72 @@ public final class TooltipPanel {
             return false;
         }
         char start = line.charAt(0);
-        return start >= 'a' && start <= 'z' || endsMidPhrase(prev);
+        return start >= 'a' && start <= 'z' || endsMidPhrase(prev) || prose(prev, line);
+    }
+
+    /**
+     * 兩行都是<b>散文</b>，而且上一行沒有收尾——那就是同一段被折開的。
+     *
+     * <h2>為什麼小寫與連接詞那兩條還不夠</h2>
+     * 首領祭壇的敘述是
+     *
+     * <pre>
+     *   Most people don't think
+     *   Bovemists revere cows for a
+     *   good reason. The people around
+     * </pre>
+     *
+     * 第二行大寫開頭（專有名詞），而第一行結尾是 {@code think}——不是冠詞也不是
+     * 介系詞。兩條判準都不中，於是第一行自成一段：它剛好在語料裡有譯文，
+     * 其餘幾行沒有，畫面上就成了一句中文接三句英文。使用者回報的「翻譯一半」
+     * 就是這個。
+     *
+     * <h2>怎麼跟屬性列分開</h2>
+     * 真正的風險是把<b>屬性列</b>誤當成同一段（「生命 +100」「魔力 +20」各自一行、
+     * 也都沒有句點），那樣只要一行查不到就整疊退回英文。分辨的方法是看內容：
+     * 屬性列一定帶數字或冒號，敘述不帶。另外要求上一行結尾是字母或逗號——
+     * 結尾是 {@code ]} 的是完整的標籤（「Slay Slimes [Mini-Quest]」），
+     * 下一行是另一件事。
+     */
+    private static boolean prose(String prev, String line) {
+        char end = prev.charAt(prev.length() - 1);
+        return (Character.isLetter(end) || end == ',')
+                && hasLowerWord(prev)
+                && proseLine(prev) && proseLine(line);
+    }
+
+    /**
+     * 這一行裡有<b>小寫開頭</b>的字嗎——也就是它是句子，不是一個名稱。
+     *
+     * <p>「Infested Pit Key」整行 Title Case，那是物品名；下一行「Use this item
+     * at the」是新的一句，不能跟它併成同一段（否則名稱翻好了也會被退回英文）。
+     * 「Most people don't think」裡有 people、think，一看就知道是句子的中間。
+     */
+    private static boolean hasLowerWord(String line) {
+        for (int i = 1; i < line.length(); i++) {
+            if (line.charAt(i - 1) == ' ' && Character.isLowerCase(line.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 見 {@link #prose}：像散文的一行——好幾個字、不帶數字、不帶冒號。 */
+    private static boolean proseLine(String line) {
+        // 項目符號開頭的是清單的一項，不是句子的續行——「- Converts up to
+        // Liquid Emeralds」被併進前一句之後，整疊都退回英文了。
+        if (!Character.isLetter(line.charAt(0))) {
+            return false;
+        }
+        if (line.indexOf(' ') < 0 || line.indexOf(':') >= 0) {
+            return false;
+        }
+        for (int i = 0; i < line.length(); i++) {
+            if (Character.isDigit(line.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

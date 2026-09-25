@@ -89,11 +89,46 @@ public final class BlockLayoutTest {
                 line(44, "xxxxxxxxx"),               // - Rewards:
                 line(44, "xxxxxxxxxxxxxxxxxxx"),     // - +5 Experience Points
                 line(44, "xxxxxxxxxxxxxxxxxxxxx"))); // - +1 Unidentified Helmet
+        // ★ 釣魚迷你任務那張卡：窄到「距離／長度／難度」被誤判成置中。
+        //
+        // 數字取自實機診斷檔「27 · Gather Koi I [Mini-Quest]」：
+        // span 是 101／108／96／103，差 12 像素，容差是 16——每一道
+        // 檢查都過了，四行全被判成置中。三行的縮排是一模一樣的 14px，
+        // 長短卻差 12px——置中的行不可能這樣。
+        List<Component> koi = new java.util.ArrayList<>(List.of(
+                line(0, "x".repeat(20)),      // Gather Koi I [Mini-Quest]  122px
+                line(0, "x".repeat(15)),      // Cannot be started           92px
+                Component.literal(" "),
+                line(0, "x".repeat(17)),      // ✖ Fishing Lv. Min: 61      101px
+                line(14, "x".repeat(13)),     // {#}Distance: Medium         80px
+                line(14, "x".repeat(11)),     // {#}Length: Short            68px
+                line(14, "x".repeat(12))));   // {#}Difficulty: Easy         75px
+        boolean[] koiFlags = BlockLayout.centered(koi, WIDTH);
+        check("★ 縮排一樣、長短不同的幾行不是置中（實際 "
+                        + java.util.Arrays.toString(koiFlags) + "）",
+              !koiFlags[3] && !koiFlags[4] && !koiFlags[5] && !koiFlags[6]);
+
         boolean[] flags = BlockLayout.centered(cave, WIDTH);
         check("★ 置中的標題兩行：縮排差只有內容差的一半也要認得出來",
               flags[0] && flags[1]);
         check("★ 底下縮排相同的清單三行仍然靠左",
               !flags[3] && !flags[4] && !flags[5]);
+
+        // ★ 只有一項獎勵的迷你任務：獎勵那一段只有兩行，span 差 2px「完美吻合」。
+        //
+        //   縮排 14  內容 44   Rewards:
+        //   縮排  4  內容 62   - +32400 XP
+        //
+        // 那是巧合——整塊有 158px 寬，這兩行只是靠左的清單。先前被判成置中，
+        // 中文變短之後縮排跟著加大，整段獎勵往右飄（實機圖：采集钻石 II）。
+        List<Component> oneReward = new java.util.ArrayList<>(List.of(
+                line(0, "xxxxxxxxxxxxxxxxxxxxxxxxxx"),   // 158px 的敘述行
+                Component.literal(" "),
+                line(14, "xxxxxxx"),                     // Rewards:      span 72
+                line(4, "xxxxxxxxxx")));                 // - +32400 XP   span 68
+        boolean[] rewardFlags = BlockLayout.centered(oneReward, WIDTH);
+        check("★ 兩行的獎勵欄 span 遠窄於整塊 -> 靠左，不是置中",
+              !rewardFlags[2] && !rewardFlags[3]);
 
         // 材料的配方清單：整塊靠左，縮排都是 0
         boolean[] recipes = BlockLayout.centered(List.of(
