@@ -239,7 +239,7 @@ public final class SettingsScreen extends Screen {
         // 「跟別的玩家講話請用原文」。第一次進 Wynncraft 會自動跳出，勾了不再顯示之後
         // 只能從這裡打開，所以放在每一頁都看得到的標題列，不藏進分類。
         addRenderableWidget(Button.builder(Component.literal("!"),
-                        b -> this.minecraft.setScreen(new NoticeScreen(this)))
+                        b -> this.minecraft.gui.setScreen(new NoticeScreen(this)))
                 .bounds(this.width - 28, 8, 20, 20)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(T.c("notice.button")))
                 .build());

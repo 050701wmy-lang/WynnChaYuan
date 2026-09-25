@@ -25,7 +25,7 @@
     "minecraft": "~26.2",
     "java": ">=25",
     "fabric-api": "*",
-    "wynntils": ">=4.0.0- <5.0.0-"
+    "wynntils": ">=4.0.0-"
   },
   "mixins": [
     "wynnchayuan.mixins.json"

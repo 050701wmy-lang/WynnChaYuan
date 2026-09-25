@@ -484,7 +484,6 @@ public final class DialogueOverlay {
 
     public static void clear() {
         latestOriginal = null;
-        DialogueRewriter.forget();
         current = List.of();
         choices = List.of();
         rawChoices = List.of();

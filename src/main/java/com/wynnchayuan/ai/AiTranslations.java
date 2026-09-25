@@ -26,7 +26,6 @@ public final class AiTranslations {
 
     public static void sessionChanged(boolean active) {
         synchronized (dialogue) { dialogue.clear(); }
-        CurrentQuest.set(null);
         if (WynnChaYuan.ai() != null) WynnChaYuan.ai().sessionChanged(active);
     }
 

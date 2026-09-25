@@ -188,6 +188,13 @@ public final class WynnChaYuan implements ClientModInitializer {
         // 而後載入的會蓋掉先載入的。於是每一條各自回退。
         loadLayers();
 
+        // NPC dialogue replacement must not depend on one Wynntils minor version's
+        // internal event model. Fabric exposes the underlying game-info message as a
+        // stable API; Wynntils can still inspect the original message first, and this
+        // fallback performs the final visual replacement when its NpcDialogueEvent is
+        // absent (observed with the Minecraft 26.2 Wynntils 4.0 snapshot).
+        com.wynnchayuan.listener.FabricDialogueListener.register();
+
         // 先問一句「有沒有新翻譯」，要不要抓由玩家決定。
         //
         // 以前這裡無條件把整個語言的三十幾個檔重抓一遍。翻譯一個月可能只動幾條，

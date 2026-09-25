@@ -2,7 +2,7 @@ package com.wynnchayuan.client;
 
 import com.wynnchayuan.WynnChaYuan;
 import com.wynnchayuan.render.Colors;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.Screen;
@@ -62,12 +62,12 @@ public final class NoticeScreen extends Screen {
             return;
         }
         var mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc == null || mc.player == null || mc.level == null || mc.screen != null) {
+        if (mc == null || mc.player == null || mc.level == null || mc.gui.screen() != null) {
             return;
         }
         pending = false;
         shownThisSession = true;
-        mc.setScreen(new NoticeScreen(null));
+        mc.gui.setScreen(new NoticeScreen(null));
     }
 
     /**
@@ -129,19 +129,19 @@ public final class NoticeScreen extends Screen {
         if (dontShow != null && dontShow.selected() != WynnChaYuan.config().noticeDismissed()) {
             WynnChaYuan.config().setNoticeDismissed(dontShow.selected());
         }
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Cards.panel(g, cardX(), cardY(), cardW(), cardH());
-        super.render(g, mouseX, mouseY, delta);
+        super.extractRenderState(g, mouseX, mouseY, delta);
         int accent = WynnChaYuan.config().accentARGB();
         int y = cardY() + PAD;
-        g.drawCenteredString(this.font, this.title, this.width / 2, y, accent);
+        g.centeredText(this.font, this.title, this.width / 2, y, accent);
         y += LINE + 8;
         for (FormattedCharSequence line : body()) {
-            g.drawString(this.font, line, cardX() + PAD, y, Colors.TEXT);
+            g.text(this.font, line, cardX() + PAD, y, Colors.TEXT);
             y += LINE;
         }
     }

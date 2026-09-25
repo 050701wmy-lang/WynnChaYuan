@@ -71,8 +71,9 @@ public final class AiFallbackTest {
         var config = new AiTranslationConfig(true, "https://example.invalid", "test", "test", "zh_cn");
         try (var ai = new AiTranslationService(Files.createTempDirectory("wcy-tooltip"), config,
                 cfg -> (source, context) -> CompletableFuture.completedFuture(
-                        source.replace("Unidentified Dagger", "未鉴定匕首")
-                                .replace("Rubble", "碎石").replace("Junk Item", "垃圾物品")),
+                        context.translationType().equals("DIALOGUE") ? "NPC 对话已翻译。"
+                                : source.replace("Unidentified Dagger", "未鉴定匕首")
+                                        .replace("Rubble", "碎石").replace("Junk Item", "垃圾物品")),
                 System::currentTimeMillis)) {
             field.set(null, ai);
             ai.sessionChanged(true);
@@ -90,7 +91,28 @@ public final class AiFallbackTest {
             await(() -> ai.lookupOrRequest(dagger, context) != null);
             check(ai.lookupOrRequest(dagger, context).equals(
                     "{#}{#}{#}{#}{#}{#}{#}未鉴定匕首"), "generic item label preserves seven glyph slots");
+            dialoguePath(ai, store);
         } finally { field.set(null, before); }
+    }
+
+    private static void dialoguePath(AiTranslationService ai, TranslationStore store) throws Exception {
+        String source = "A completely unknown NPC sentence awaits translation.";
+        var method = com.wynnchayuan.render.DialogueRewriter.class.getDeclaredMethod(
+                "line", String.class, TranslationStore.class, int.class,
+                net.minecraft.network.chat.Style.class, int.class);
+        method.setAccessible(true);
+        String translated = null;
+        long limit = System.nanoTime() + TimeUnit.SECONDS.toNanos(4);
+        while (translated == null && System.nanoTime() < limit) {
+            translated = (String) method.invoke(null, source, store, 1,
+                    net.minecraft.network.chat.Style.EMPTY, 232);
+            Thread.sleep(25);
+        }
+        var context = new TranslationContext("zh_cn", "DIALOGUE", null, null, null);
+        check(translated != null && translated.contains("NPC 对话已翻译"),
+                "dialogue rewriter reaches AI fallback after text settles");
+        check(ai.lookupOrRequest(source, context) != null,
+                "dialogue result is cached with DIALOGUE context");
     }
 
     private static void await(BooleanSupplier ready) throws Exception {

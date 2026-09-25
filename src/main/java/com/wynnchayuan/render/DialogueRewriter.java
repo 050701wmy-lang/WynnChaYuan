@@ -118,7 +118,6 @@ public final class DialogueRewriter {
      * @return 改寫過的訊息，或 {@code null} 表示原樣不動
      */
     public static Component rewrite(Component message, TranslationStore store) {
-        refreshTranslationRevision();
         if (message == null || store == null) {
             return null;
         }
@@ -900,7 +899,6 @@ public final class DialogueRewriter {
 
     static String line(String text, TranslationStore store, int rows,
             Style style, int width) {
-        refreshTranslationRevision();
         // 先參數化再查表。
         //
         // 語料裡的鍵是「Hey, {u}! Are you alright…」，而畫面上是玩家的真名。
@@ -1113,16 +1111,6 @@ public final class DialogueRewriter {
 
     /** 上一幀貼上畫面的譯文，以及當時原文打到哪。見 {@link #kept}。 */
     private static String held;
-    private static long translationRevision = -1;
-
-    private static void refreshTranslationRevision() {
-        long revision = com.wynnchayuan.ai.AiTranslations.revision();
-        if (translationRevision != revision) {
-            forget();
-            Marquee.clear();
-            translationRevision = revision;
-        }
-    }
     private static String heldRaw = "";
 
     /**
