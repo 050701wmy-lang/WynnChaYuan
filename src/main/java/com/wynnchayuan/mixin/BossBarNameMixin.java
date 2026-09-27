@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(BossHealthOverlay.class)
 public abstract class BossBarNameMixin {
 
-    @Redirect(method = "render",
+    @Redirect(method = "extractRenderState",
               at = @At(value = "INVOKE",
                        target = "Lnet/minecraft/client/gui/components/LerpingBossEvent;getName()Lnet/minecraft/network/chat/Component;"))
     private Component wynnchayuan$translate(LerpingBossEvent event) {

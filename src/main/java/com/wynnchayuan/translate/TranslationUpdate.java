@@ -74,7 +74,7 @@ public final class TranslationUpdate {
     public static void registerCommand() {
         net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback.EVENT
                 .register((dispatcher, registry) -> dispatcher.register(
-                        net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+                        net.fabricmc.fabric.api.client.command.v2.ClientCommands
                                 .literal(COMMAND)
                                 .executes(ctx -> {
                                     update(Minecraft.getInstance());
@@ -132,6 +132,6 @@ public final class TranslationUpdate {
     /** 送一行。先記下來，收集語料時才不會把它當成遊戲原文，見 {@code OwnOutputs}。 */
     private static void tell(Minecraft client, Component line) {
         com.wynnchayuan.capture.OwnOutputs.note(line);
-        client.player.displayClientMessage(line, false);
+        client.player.sendSystemMessage(line);
     }
 }

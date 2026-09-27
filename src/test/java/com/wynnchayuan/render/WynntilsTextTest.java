@@ -227,18 +227,28 @@ public final class WynntilsTextTest {
         TranslationStore store = new TranslationStore();
         net.minecraft.network.chat.Component altar =
                 net.minecraft.network.chat.Component.literal("Corrupted Altar");
+        net.minecraft.network.chat.Component bar =
+                net.minecraft.network.chat.Component.literal("Horse - 47❤");
 
         store.loadAll(Path.of(corpus, "zh_tw"));
         check("先是繁中（實際 "
                         + WynntilsText.entityName(altar, config, store).getString() + "）",
                 "腐敗祭壇".equals(
                         WynntilsText.entityName(altar, config, store).getString()));
+        check("先是繁中 Boss 血條",
+                WynntilsText.bossBar(bar, config, store).getString().startsWith("馬"));
+        check("先是繁中追蹤標記",
+                "廚師助理".equals(WynntilsText.marker("Cook Assistant", config, store)));
 
         store.loadAll(Path.of(corpus, "zh_cn"));     // 同一個 store，換一層譯文
         check("換語言之後立刻跟著換（實際 "
                         + WynntilsText.entityName(altar, config, store).getString() + "）",
                 "腐化祭坛".equals(
                         WynntilsText.entityName(altar, config, store).getString()));
+        check("換語言後 Boss 血條立刻跟著換",
+                WynntilsText.bossBar(bar, config, store).getString().startsWith("马"));
+        check("換語言後追蹤標記立刻跟著換",
+                "厨师助手".equals(WynntilsText.marker("Cook Assistant", config, store)));
     }
 
     /** 盔甲座疊出來的浮空字：討伐戰祭壇上方那種。 */

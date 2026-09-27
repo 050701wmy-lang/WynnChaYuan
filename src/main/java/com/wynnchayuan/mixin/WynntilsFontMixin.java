@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class WynntilsFontMixin {
 
     @ModifyVariable(
-            method = "renderText(Lnet/minecraft/client/gui/GuiGraphics;"
+            method = "renderText(Lnet/minecraft/client/gui/GuiGraphicsExtractor;"
                     + "Lcom/wynntils/core/text/StyledText;FF"
                     + "Lcom/wynntils/utils/colors/CustomColor;"
                     + "Lcom/wynntils/utils/render/type/HorizontalAlignment;"
