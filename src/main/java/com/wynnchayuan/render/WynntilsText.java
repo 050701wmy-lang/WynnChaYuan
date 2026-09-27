@@ -252,9 +252,11 @@ public final class WynntilsText {
         }
         synchronized (MARKERS) {
             long revision = com.wynnchayuan.ai.AiTranslations.revision();
-            if (markerStore != store || markerRevision != revision) {
+            if (markerStore != store || markerAge != store.generation()
+                    || markerRevision != revision) {
                 MARKERS.clear();
                 markerStore = store;
+                markerAge = store.generation();
                 markerRevision = revision;
             }
             String hit = MARKERS.get(text);
@@ -273,6 +275,8 @@ public final class WynntilsText {
     private static final java.util.Map<String, String> MARKERS = new java.util.HashMap<>();
     private static TranslationStore markerStore;
     private static long markerRevision = -1;
+    /** 見 {@link TranslationStore#generation}。 */
+    private static int markerAge = -1;
 
     /** mixin 的入口：快捷列上方那行手持物品名稱。見 {@code HeldItemNameMixin}。 */
     public static net.minecraft.network.chat.Component heldItemName(
@@ -324,9 +328,11 @@ public final class WynntilsText {
             return name;
         }
         long revision = com.wynnchayuan.ai.AiTranslations.revision();
-        if (store != barStore || barRevision != revision || BARS.size() > 256) {
+        if (store != barStore || barAge != store.generation()
+                || barRevision != revision || BARS.size() > 256) {
             BARS.clear();
             barStore = store;
+            barAge = store.generation();
             barRevision = revision;
         }
         net.minecraft.network.chat.Component hit = BARS.get(name);
@@ -455,6 +461,9 @@ public final class WynntilsText {
     private static TranslationStore barStore;
     private static long barRevision = -1;
 
+    /** 見 {@link TranslationStore#generation}：換語言不換 store，只能比這個。 */
+    private static int barAge = -1;
+
     private static boolean aiEnabled() {
         return WynnChaYuan.ai() != null && WynnChaYuan.ai().config().enabled();
     }
@@ -527,9 +536,9 @@ public final class WynntilsText {
                 || config.nametagMode() == CollectorConfig.NametagMode.OFF) {
             return name;
         }
-        if (store != nameStore || NAMES.size() > 512) {
+        if (nameAge != store.generation() || NAMES.size() > 512) {
             NAMES.clear();
-            nameStore = store;
+            nameAge = store.generation();
         }
         net.minecraft.network.chat.Component hit = NAMES.get(name);
         if (hit == null) {
@@ -574,7 +583,8 @@ public final class WynntilsText {
 
     private static final java.util.Map<net.minecraft.network.chat.Component,
             net.minecraft.network.chat.Component> NAMES = new java.util.HashMap<>();
-    private static TranslationStore nameStore;
+    /** 見 {@link TranslationStore#generation}。 */
+    private static int nameAge = -1;
 
     /** mixin 的入口：Wynntils「手持物品名稱」疊層記下的那份字。見 {@code HeldItemOverlayMixin}。 */
     public static StyledText heldItemText(StyledText text) {
