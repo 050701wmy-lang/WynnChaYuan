@@ -2852,7 +2852,7 @@
   },
   "Echoes of Change#284": {
    "src": "I mean... if you really want to know. It's great! A day of NO work. You know what that means!",
-   "dst": "我是說……如果你真的想知道的話。好得很啊！一整天「不用工作」。你知道那代表什麼吧！",
+   "dst": "這個嘛……如果你真的想知道的話。好得很啊！一整天「不用工作」。你知道那代表什麼吧！",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Echoes of Change",
@@ -3252,7 +3252,7 @@
   },
   "Echoes of Change#324": {
    "src": "Oh! That one... Ya know, I don't even know what year it is anymore.",
-   "dst": "喔！那個啊……你知道嗎，我連現在是哪一年都不知道了。",
+   "dst": "喔！那個啊……說真的，我連現在是哪一年都不知道了。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Echoes of Change",
@@ -3982,7 +3982,7 @@
   },
   "Echoes of Change#397": {
    "src": "Enough, Quill. My judgment is clear. I do not believe an additional Sovereign changes anything. Now, are you still ready to proceed?",
-   "dst": "夠了，Quill。我的判斷很清楚。我不認為多一位統領會改變什麼。現在，你們還準備好要進行嗎？",
+   "dst": "夠了，Quill。我的判斷很清楚。我不認為多一位統領會改變什麼。現在，你們還準備好要繼續嗎？",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Echoes of Change",
@@ -4242,7 +4242,7 @@
   },
   "Echoes of Change#423": {
    "src": "Meet up with Syndra for your duel at [-{~}, {~}, -{~}].",
-   "dst": "到 [-{~1}, {~2}, -{~3}] 與 Syndra 會合進行決鬥。",
+   "dst": "到 [-{~1}, {~2}, -{~3}] 與 Syndra 決鬥。",
    "role": "desc",
    "kind": "objective",
    "quest": "Echoes of Change",
@@ -4522,7 +4522,7 @@
   },
   "Echoes of Change#451": {
    "src": "You know, that was the year after Sovereign Selium died. The position for Sovereign of the {p} had opened up. If things had gone differently, could I have...?",
-   "dst": "你知道嗎，那是 Selium 統領死去的隔年。{p} 統領的位置空了出來。如果當時事情走向不同，我會不會……？",
+   "dst": "說起來，那是 Selium 統領死去的隔年。{p} 統領的位置空了出來。如果當時事情走向不同，我會不會……？",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Echoes of Change",

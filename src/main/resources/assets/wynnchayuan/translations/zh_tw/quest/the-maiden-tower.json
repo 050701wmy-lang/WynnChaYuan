@@ -98,7 +98,7 @@
   },
   "The Maiden Tower#009": {
    "src": "Ohoho...you're one of those Humans I've read about, aren't you? Did you truly intend to be my suitor, dear?~",
-   "dst": "喔呵呵……你就是我書上讀過的那種人類吧？親愛的，你真的是來當我的追求者的嗎？～",
+   "dst": "喔呵呵……你就是我書上讀過的那種人類吧？親愛的，你真的是來當我的追求者嗎？～",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Maiden Tower",
@@ -318,7 +318,7 @@
   },
   "The Maiden Tower#034": {
    "src": "Find the urn in the {p} Catacombs, behind the {p} bank at [-{~}, {~}, -{~}]",
-   "dst": "前往 [-{~1}, {~2}, -{~3}]，在 {p} 銀行後方的 {p} 墓窟中找到那只罈子",
+   "dst": "在 {p} 墓窟中找到那只罈子，墓窟就在 {p} 銀行後方 [-{~1}, {~2}, -{~3}]",
    "role": "desc",
    "kind": "objective",
    "quest": "The Maiden Tower",

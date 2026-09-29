@@ -822,7 +822,7 @@
   },
   "The Price of Ingenuity#082": {
    "src": "You know, you'd think she'd wake up at the crack of dawn with her military background... but nope.",
-   "dst": "你知道嗎，以她的軍旅背景，你會以為她天一亮就會起床……結果並沒有。",
+   "dst": "說真的，以她的軍旅背景，你會以為她天一亮就會起床……結果並沒有。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",
@@ -1102,7 +1102,7 @@
   },
   "The Price of Ingenuity#110": {
    "src": "I mean... I w-wouldn't mind some fr-fresh bread...",
-   "dst": "我是說……我不、不介意來點新鮮的麵包……",
+   "dst": "這個嘛……我不、不介意來點新鮮的麵包……",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",
@@ -1662,7 +1662,7 @@
   },
   "The Price of Ingenuity#166": {
    "src": "I mean, j-just look at how fast your m-magic developed, Mora!",
-   "dst": "我是說，你看你的魔、魔法發展得多快，Mora！",
+   "dst": "你看你的魔、魔法發展得多快，Mora！",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",
@@ -2162,7 +2162,7 @@
   },
   "The Price of Ingenuity#216": {
    "src": "I mean... yeah? Yusanu made this thing for me, and he calls it the Electric Blaster.",
-   "dst": "我是說……對啊？Yusanu 幫我做的，他管它叫電擊爆能槍。",
+   "dst": "這個嘛……對啊？Yusanu 幫我做的，他管它叫電擊爆能槍。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",
@@ -3272,7 +3272,7 @@
   },
   "The Price of Ingenuity#327": {
    "src": "You know, they've been getting better and better at replicating human behavior! My latest constructs were at an estimated {~} accuracy-",
-   "dst": "你知道嗎，他們在模仿人類行為這方面愈來愈厲害了！我最新的構裝估計已經有 {~} 的準確度——",
+   "dst": "說真的，他們在模仿人類行為這方面愈來愈厲害了！我最新的構裝估計已經有 {~} 的準確度——",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",
@@ -4362,7 +4362,7 @@
   },
   "The Price of Ingenuity#436": {
    "src": "Work on project E-lec-tricity is ongoing (yes, the name changed... the Sovereign didn't like what I called it before...... bleh.), and it's going really well!!",
-   "dst": "電——力計畫還在進行(對，名字改了……統領不喜歡我原本取的那個……唉。)，而且進行得很順利！！！",
+   "dst": "電——力計畫還在推進(對，名字改了……統領不喜歡我原本取的那個……唉。)，而且進行得很順利！！！",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",
@@ -5472,7 +5472,7 @@
   },
   "The Price of Ingenuity#547": {
    "src": "So- so, y'know, I'm a little mad. He should have talked to us about it! But... he's telling us now. He's asking for help now.",
-   "dst": "所以——所以，你知道嗎，我是有點生氣。他早該跟我們講的！可是……他現在講了。他現在在求助了。",
+   "dst": "所以——所以，說真的，我是有點生氣。他早該跟我們講的！可是……他現在講了。他現在在求助了。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "The Price of Ingenuity",

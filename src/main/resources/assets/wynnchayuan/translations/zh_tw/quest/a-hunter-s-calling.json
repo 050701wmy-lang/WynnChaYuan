@@ -502,7 +502,7 @@
   },
   "A Hunter's Calling#049": {
    "src": "Yes sir, everything went smoothly. did a great thing for the company.",
-   "dst": "是的長官，一切順利。 為公司做了一件大好事。",
+   "dst": "是的長官，一切順利。為公司做了一件大好事。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "A Hunter's Calling",
@@ -1662,7 +1662,7 @@
   },
   "A Hunter's Calling#165": {
    "src": "BOTH THE AVOS AND HUMANS ARE INCREDIBLY DANGEROUS. I MEAN, HAVE YOU- WAIT. YOU WOULD NOT HAVE SEEN LEGENDARY ISLAND.",
-   "dst": "Avos 與人類都極度危險。我是說，你有沒有——等等。你不可能見過 Legendary Island。",
+   "dst": "Avos 與人類都極度危險。話說，你有沒有——等等。你不可能見過 Legendary Island。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "A Hunter's Calling",

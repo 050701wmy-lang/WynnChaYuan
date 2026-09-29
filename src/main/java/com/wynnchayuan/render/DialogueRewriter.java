@@ -529,6 +529,27 @@ public final class DialogueRewriter {
      *              （9 像素）去量會少算一成，於是每一行都塞得比框還寬，畫出來就溢出。
      */
     static List<String> wrap(String text, int rows, Style style, int limit) {
+        List<String> out = wrap(text, rows, style, limit, true);
+        if (out != null) {
+            return out;
+        }
+        // 避頭尾（見 {@link #kinsoku}）把斷點往前挪，每一行因此少放幾個字。
+        // 原本剛好攤得進去的句子可能就攤不進去了——而攤不進去的代價不是
+        // 排版難看，是<b>整句掉回英文</b>（呼叫端那一關直接 drop）。
+        //
+        // 玩家看到的是「中文打到最後一幀忽然變回英文」：打字打到一半時譯文
+        // 只出來前面一截，那一截塞得下；最後一幀才輪到完整譯文，於是就在
+        // 講完的那一刻整句跳掉。issue #864。
+        //
+        // 排版好看是加分，整句變英文是減分。塞不下的時候就不做避頭尾。
+        return wrap(text, rows, style, limit, false);
+    }
+
+    /**
+     * @param kinsoku 要不要做避頭尾。塞不下時上面那一支會關掉它再試一次。
+     */
+    static List<String> wrap(String text, int rows, Style style, int limit,
+                             boolean kinsoku) {
         List<String> out = new ArrayList<>(rows);
         int at = 0;
         for (int row = 0; row < rows; row++) {
@@ -567,10 +588,74 @@ public final class DialogueRewriter {
                     cut = last;                // 整行就是一個長字，只好斷在空白
                 }
             }
+            if (kinsoku) {
+                cut = kinsoku(text, at, cut);
+            }
             out.add(text.substring(at, cut).stripTrailing());
             at = cut < text.length() && text.charAt(cut) == ' ' ? cut + 1 : cut;
         }
         return at >= text.length() ? out : null;
+    }
+
+    /** 不能留在行尾的字元：開括號與開引號，後面接的東西要跟著它一起下去。 */
+    private static final String OPENING = "([{<「『【《〈（〔［｛“‘";
+
+    /** 不能出現在行首的字元：閉括號與標點，要把前一個字一起帶下去。 */
+    private static final String CLOSING = ")]}>」』】》〉）〕］｝”’，。、；：！？%％・…‥";
+
+    /** 避頭尾最多往前挪幾個字元。見 {@link #kinsoku}。 */
+    private static final int KINSOKU_MAX = 3;
+
+    /**
+     * 避頭尾：把斷點往前挪，讓成對的東西不要被拆在兩行。
+     *
+     * <h2>實機回報</h2>
+     * Ferndor 那句「你要是能把 [Abysso Galoshes] 帶來幫我們」——上一行結尾停在
+     * {@code [}，物品名整個跑到下一行去，讀起來像是句子斷在一個孤零零的括號上：
+     *
+     * <pre>
+     *   多年前被一個海盜從我們這裡偷走了！你要是能把 [
+     *   Abysso Galoshes] 帶來幫我們，我可以給你報酬！
+     * </pre>
+     *
+     * 上面那一段斷字邏輯只管「英文單字不要從中間切」，所以它退到了 {@code A}，
+     * 而 {@code [} 不是字母，就被留在原地。物品名前面的方括號在 Wynncraft 裡
+     * 是「這是一件東西」的記號，跟名字是一組的。
+     *
+     * <h2>兩條規則</h2>
+     * <ul>
+     *   <li><b>行尾禁則</b>：{@link #OPENING} 那些字元不能是一行的最後一個，
+     *       斷點往前挪，它們跟著下一行走。</li>
+     *   <li><b>行首禁則</b>：{@link #CLOSING} 那些字元不能是一行的第一個，
+     *       斷點往前挪，把前一個字一起帶下去。中文的逗號句號也算——
+     *       一行開頭一個「，」比什麼都醒目。</li>
+     * </ul>
+     *
+     * <h2>只往前挪，不往後</h2>
+     * 往後挪（把閉括號拉上來）會讓那一行比框還寬，畫出來就溢出框外。
+     * 往前挪只會讓行變短，一定畫得下。
+     *
+     * <p>代價是這一行少了幾個字，整段有可能因此攤不進原本的行數而回傳
+     * {@code null}——那時整段留英文。所以最多只往前挪
+     * {@value #KINSOKU_MAX} 個字元，並且絕不挪到整行變空的地步：
+     * 寧可讓一個括號留在行尾，也不要整段掉回英文。
+     */
+    static int kinsoku(String text, int at, int cut) {
+        int moved = cut;
+        for (int step = 0; step < KINSOKU_MAX; step++) {
+            if (moved <= at + 1) {
+                break;                         // 再挪下去這一行就空了
+            }
+            char head = moved < text.length() ? text.charAt(moved) : '\0';
+            char tail = text.charAt(moved - 1);
+            if (OPENING.indexOf(tail) >= 0 || CLOSING.indexOf(head) >= 0) {
+                moved--;
+                continue;
+            }
+            break;
+        }
+        // 挪完只剩空白的話等於白挪，還會生出一行空行。退回原本的斷點。
+        return text.substring(at, moved).isBlank() ? cut : moved;
     }
 
     private static boolean isLatin(char c) {
@@ -1661,9 +1746,25 @@ public final class DialogueRewriter {
                         : original.withFont(pair)));
     }
 
+    /**
+     * 測試用的量寬度替身。
+     *
+     * <p>測試裡沒有 Minecraft，下面那一支只好退回「一個字元 6px」——對英文
+     * 差不多，但中日韓實機是<b>一個字 10px</b>，中英混排的句子會被量歪四成：
+     * 譯文裡留著的英文名字（{@code Corrupter of World Cave}）會被當成中文那樣寬，
+     * 於是量出一堆根本不存在的「塞不下」。
+     *
+     * <p>要量「譯文塞不塞得進原文佔的行數」就非得有真的字寬不可，
+     * 所以留一個替身給 {@code DialogueFitAudit}。實機永遠不會走到這一行。
+     */
+    static java.util.function.ToIntFunction<String> widthForTest;
+
     private static int width(String text) {
         Minecraft mc = Minecraft.getInstance();
-        return mc == null ? text.length() * 6 : mc.font.width(text);
+        if (mc != null) {
+            return mc.font.width(text);
+        }
+        return widthForTest != null ? widthForTest.applyAsInt(text) : text.length() * 6;
     }
 
     /** 帶樣式量寬度——圖示的寬度要照它<b>原本的字型</b>算，不是預設字型。 */

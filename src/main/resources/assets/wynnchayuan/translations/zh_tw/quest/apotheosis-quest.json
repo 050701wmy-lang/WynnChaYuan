@@ -1002,7 +1002,7 @@
   },
   "Apotheosis (Quest)#099": {
    "src": "Ha! As if. Half those tabloids are filled with naught but meaningless gossip! Though, I do have an appreciation for the Majin Monthly. It's quite the interesting read, you know!",
-   "dst": "哈！才怪。那些小報有一半只裝著毫無意義的八卦！不過《Majin 月刊》我倒是頗為欣賞。那可是相當有意思的讀物，你知道嗎！",
+   "dst": "哈！才怪。那些小報有一半只裝著毫無意義的八卦！不過《Majin 月刊》我倒是頗為欣賞。那可是相當有意思的讀物呢！",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Apotheosis (Quest)",
@@ -1302,7 +1302,7 @@
   },
   "Apotheosis (Quest)#129": {
    "src": "...you know what?",
-   "dst": "……你知道嗎？",
+   "dst": "……算了。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Apotheosis (Quest)",
@@ -5802,7 +5802,7 @@
   },
   "Apotheosis (Quest)#580": {
    "src": "It's... mana, but it's not mine. It's... all the strands, the threads, tied up in everything. And I can, um, use as much as I want.",
-   "dst": "那是……魔力，但不是我的。那是……所有的絲線、所有的線，纏繞在萬物之中。而我可以，嗯，想用多少就用多少。",
+   "dst": "那是……魔力，但不是我的。那是……所有的絲線、所有的脈絡，纏繞在萬物之中。而我可以，嗯，想用多少就用多少。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Apotheosis (Quest)",

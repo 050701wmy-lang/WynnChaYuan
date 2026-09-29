@@ -1061,3 +1061,95 @@ tasks.register('runHijackedLetterChecks', JavaExec) {
     mainClass = 'com.wynnchayuan.translate.HijackedLetterTest'
 }
 tasks.named('check') { dependsOn 'runHijackedLetterChecks' }
+
+// 詞條列的數值欄：欄距只有幾像素時也要補償。
+tasks.register('runStatValueColumnChecks', JavaExec) {
+    group = 'verification'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.translate.StatValueColumnTest'
+}
+tasks.named('check') { dependsOn 'runStatValueColumnChecks' }
+
+// 一排名牌：框各用自己的高度，矮的置中，不整排拉成一樣高。
+tasks.register('runNametagRowChecks', JavaExec) {
+    group = 'verification'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.render.NametagRowTest'
+}
+tasks.named('check') { dependsOn 'runNametagRowChecks' }
+
+tasks.register('runDialogueKinsokuChecks', JavaExec) {
+    group = 'verification'
+    description = '對話避頭尾：開括號不留行尾、閉括號與標點不落行首'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.render.DialogueKinsokuTest'
+}
+tasks.named('check') { dependsOn 'runDialogueKinsokuChecks' }
+
+// mixin 套件底下只能放 mixin 本身與設定外掛。
+//
+// 放過一個純 helper 進去（TypedText），編譯與 build 都沒話說，實機一開背包就炸：
+// 「is in a defined mixin package ... and cannot be referenced directly」。
+// mixins.json 宣告的那個套件是 Mixin 的地盤，裡面的類別只能由它自己載入。
+tasks.register('checkMixinPackage') {
+    group = 'verification'
+    description = 'mixin 套件底下不能放被直接引用的一般類別'
+    doLast {
+        def cfg = new groovy.json.JsonSlurper()
+                .parse(file('src/main/resources/wynnchayuan.mixins.json'))
+        def allowed = [] as Set
+        ['client', 'server', 'mixins'].each { key ->
+            (cfg[key] ?: []).each { allowed << it.toString().tokenize('.').last() }
+        }
+        if (cfg.plugin) {
+            allowed << cfg.plugin.toString().tokenize('.').last()
+        }
+        def stray = file('src/main/java/com/wynnchayuan/mixin').listFiles()
+                .findAll { it.name.endsWith('.java') }
+                .collect { it.name - '.java' }
+                .findAll { !allowed.contains(it) }
+                .sort()
+        if (stray) {
+            throw new GradleException(
+                    "這幾個類別在 mixin 套件底下，但不是 mixins.json 列的 mixin：\n  "
+                    + stray.join('\n  ')
+                    + "\n被 mixin 注入的程式碼引用到它們的話，實機載入時會丟"
+                    + " IllegalClassLoadError。搬到別的套件（例如 render）。")
+        }
+    }
+}
+tasks.named('check') { dependsOn 'checkMixinPackage' }
+
+tasks.register('runDialogueFitChecks', JavaExec) {
+    group = 'verification'
+    description = '避頭尾不可以害整句掉回英文（issue #864）'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.render.DialogueFitTest'
+}
+tasks.named('check') { dependsOn 'runDialogueFitChecks' }
+
+tasks.register('runScoreboardMirrorChecks', JavaExec) {
+    group = 'verification'
+    description = '右上那一欄哪幾段該抄進追蹤欄面板'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.listener.ScoreboardMirrorTest'
+}
+tasks.named('check') { dependsOn 'runScoreboardMirrorChecks' }
+
+tasks.register('runCorpusVersionChecks', JavaExec) {
+    group = 'verification'
+    description = 'F6 的「譯文版本」那一列不可以把「問不到」說成「最新」'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.translate.CorpusVersionTest'
+}
+tasks.named('check') { dependsOn 'runCorpusVersionChecks' }
+
+tasks.register('runAutoLanguageChecks', JavaExec) {
+    group = 'verification'
+    description = '「跟隨遊戲語言」問不到的時候不可以裝作問到了'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.wynnchayuan.translate.AutoLanguageTest'
+}
+tasks.named('check') { dependsOn 'runAutoLanguageChecks' }

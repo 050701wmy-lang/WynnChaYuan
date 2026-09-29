@@ -181,6 +181,17 @@ public final class LookAtTranslator {
             lastTemplate = null;
             shownAt = 0;
         }
+        // 模式要自己問，不能靠「LABELS 是空的」當作沒開。
+        //
+        // 先前只有 LOOK_AT 模式才會有人呼叫 remember，所以其他模式下 LABELS
+        // 永遠是空的，這一支等於自動關著。現在 CaptureListener 不管哪個模式
+        // 都記（不然切過來之後畫面上現有的 NPC 一個都不在裡面），
+        // 那個隱性的開關就沒了——就地取代模式會冒出多餘的小框。
+        if (WynnChaYuan.config() == null
+                || WynnChaYuan.config().nametagMode()
+                        != CollectorConfig.NametagMode.LOOK_AT) {
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || LABELS.isEmpty()) {
             return;
@@ -437,8 +448,9 @@ public final class LookAtTranslator {
         int lineHeight = mc.font.lineHeight + 1;
         List<List<Component>> rows = new ArrayList<>();
         List<Integer> widths = new ArrayList<>();
+        List<Integer> heights = new ArrayList<>();
         int total = 0;
-        int height = 0;
+        int tallest = 0;
         for (Component box : boxes) {
             List<Component> lines = Boxes.toLines(box);
             if (lines.isEmpty()) {
@@ -452,10 +464,12 @@ public final class LookAtTranslator {
             if (total > 0 && total + GAP + w > graphics.guiWidth() - 20) {
                 break;                         // 擺不下就到此為止
             }
+            int h = lines.size() * lineHeight + 6;
             rows.add(lines);
             widths.add(w);
+            heights.add(h);
             total += (total > 0 ? GAP : 0) + w;
-            height = Math.max(height, lines.size() * lineHeight + 6);
+            tallest = Math.max(tallest, h);
         }
         if (rows.isEmpty()) {
             return;
@@ -474,14 +488,32 @@ public final class LookAtTranslator {
             int w = widths.get(i);
             // 第一個是準心對著的，其餘淡一點：一排五個時要看得出主從
             float a = i == 0 ? alpha : alpha * 0.65f;
-            Boxes.draw(graphics, x, y, w, height, a);
-            int ty = y + 4;
+            int h = heights.get(i);
+            int top = y + topOf(tallest, h);
+            Boxes.draw(graphics, x, top, w, h, a);
+            int ty = top + 4;
             for (Component line : lines) {
                 graphics.text(mc.font, line, x + 4, ty, Colors.fade(Colors.TEXT, a));
                 ty += lineHeight;
             }
             x += w + GAP;
         }
+    }
+
+    /**
+     * 矮的框在這一排裡往下挪多少。
+     *
+     * <h2>為什麼不把整排拉成一樣高</h2>
+     * 一排名牌裡常常只有一個是多行的——路邊的招牌寫著「交易市場／在市場上／
+     * 買賣物品」三行，旁邊兩個村民只有「Hyloch 市民 LV 120」一行。先前整排
+     * 統一用最高的那個當高度，於是那兩個單行的框被拉成三行高，字擠在最上面，
+     * 底下空一大片。實機回報就是這個。
+     *
+     * <p>改成每個框各用自己的高度，矮的<b>在最高的那個中間</b>。框不會被
+     * 無謂地撐大，一排看起來也還是對齊的——對齊的是中線，不是上緣。
+     */
+    static int topOf(int tallest, int height) {
+        return (tallest - height) / 2;
     }
 
     /** 兩個名牌之間的間隔。 */

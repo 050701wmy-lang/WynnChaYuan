@@ -1102,7 +1102,7 @@
   },
   "Celebrations in Smoke#109": {
    "src": "There will have to be an investigation into this incident and you're one person I'm positive didn't start the fire.",
-   "dst": "這起事件必須進行調查，而你是我唯一能確定沒有縱火的人。",
+   "dst": "這起事件必須調查，而你是我唯一能確定沒有縱火的人。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Celebrations in Smoke",
@@ -1452,7 +1452,7 @@
   },
   "Celebrations in Smoke#144": {
    "src": "Ask Cerisa further questions?",
-   "dst": "要再問 Arris 更多問題嗎？",
+   "dst": "要再問 Cerisa 更多問題嗎？",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Celebrations in Smoke",
@@ -1462,7 +1462,7 @@
   },
   "Celebrations in Smoke#145": {
    "src": "Ask Arris further questions?",
-   "dst": "要再問 Arris 更多問題嗎？",
+   "dst": "要再問 Cerisa 更多問題嗎？",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Celebrations in Smoke",
@@ -1582,7 +1582,7 @@
   },
   "Celebrations in Smoke#157": {
    "src": "I only, um, do general upkeep. Fixing stuff and cleaning stuff, I mean.",
-   "dst": "我只是，呃，做一般的維護。我是說，修東西和打掃之類的。",
+   "dst": "我只是，呃，做一般的維護。就是修東西和打掃之類的。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Celebrations in Smoke",
@@ -2062,7 +2062,7 @@
   },
   "Celebrations in Smoke#205": {
    "src": "You know, they were always a bit troubled. But I don't think they're bad. They just weren't suited for clan life.",
-   "dst": "你知道嗎，他們一直有點問題。但我不覺得他們是壞人。他們只是不適合氏族的生活。",
+   "dst": "說真的，他們一直有點問題。但我不覺得他們是壞人。他們只是不適合氏族的生活。",
    "role": "desc",
    "kind": "dialogue",
    "quest": "Celebrations in Smoke",
